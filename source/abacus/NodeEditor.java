@@ -23,9 +23,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
+import TuringMachine.OTMSExporter;
+
 public class NodeEditor extends JFrame implements ActionListener
 {
 	JMenuItem save = new JMenuItem("Save");
+	JMenuItem export_xml = new JMenuItem("Export OwenTMS XML");
+	JMenuItem export_tm = new JMenuItem("Export OwenTMS TM");
 	JMenuItem close = new JMenuItem("Close");
 	
 	JMenuItem modify = new JMenuItem("Modify Initial Register Contents");
@@ -33,7 +37,7 @@ public class NodeEditor extends JFrame implements ActionListener
 	
 	JMenuItem help = new JMenuItem("Help");
 	
-	JMenuItem[] items = { save, close, modify, simulate , help}; 
+	JMenuItem[] items = { save, export_xml, export_tm, close, modify, simulate , help}; 
 	
 	// buttons
 	static Image imageAdd = makeRedTransparent(new ImageIcon("images/imageAdd.GIF").getImage());
@@ -76,6 +80,8 @@ public class NodeEditor extends JFrame implements ActionListener
 		JMenuBar menuBar = new JMenuBar();
 		JMenu file = new JMenu("File");
 		file.add(save);
+		file.add(export_xml);
+		file.add(export_tm);
 		file.addSeparator();
 		file.add(close);
 		menuBar.add(file);
@@ -383,6 +389,32 @@ public class NodeEditor extends JFrame implements ActionListener
 				fd.comments = macPanel.comments;
 				
 				fd.save();
+			}
+		}
+		else if (e.getSource() == export_xml)
+		{
+			if (locked)
+			{
+				JOptionPane.showMessageDialog(null,"There is currently an active simulation running. "
+						+ "First close the simulation window and then attempt exporting again.");
+			}
+			else
+			{
+				OTMSExporter otms = new OTMSExporter((Node)macPanel.nodes.get(0));
+				otms.exportXML();
+			}
+		}
+		else if (e.getSource() == export_tm)
+		{
+			if (locked)
+			{
+				JOptionPane.showMessageDialog(null,"There is currently an active simulation running. "
+						+ "First close the simulation window and then attempt exporting again.");
+			}
+			else
+			{
+				OTMSExporter otms = new OTMSExporter((Node)macPanel.nodes.get(0));
+				otms.exportTM();
 			}
 		}
 	}
