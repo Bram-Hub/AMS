@@ -2,8 +2,9 @@ package abacus;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -12,9 +13,9 @@ import java.awt.image.ImageObserver;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
 
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -27,22 +28,23 @@ import TuringMachine.OTMSExporter;
 
 public class NodeEditor extends JFrame implements ActionListener
 {
-	JMenuItem save = new JMenuItem("Save");
+	JMenuItem newMachine = new JMenuItem("New Machine");
+	JMenuItem saveMachine = new JMenuItem("Save Machine");
+	JMenuItem loadMachine = new JMenuItem("Load Machine");
 	JMenuItem export_xml = new JMenuItem("Export OwenTMS XML");
 	JMenuItem export_tm = new JMenuItem("Export OwenTMS TM");
-	JMenuItem close = new JMenuItem("Close");
-	
-	JMenuItem modify = new JMenuItem("Modify Initial Register Contents");
-	JMenuItem simulate = new JMenuItem("Simulate");
+	JMenuItem close = new JMenuItem("Close All");
 	
 	JMenuItem help = new JMenuItem("Help");
 	
-	JMenuItem[] items = { save, export_xml, export_tm, close, modify, simulate , help}; 
+	
+	JMenuItem[] items = { newMachine, saveMachine, loadMachine, export_xml, export_tm, close, help}; 
 	
 	// buttons
 	static Image imageAdd = makeRedTransparent(new ImageIcon("images/imageAdd.GIF").getImage());
 	static Image imageSub = makeRedTransparent(new ImageIcon("images/imageSub.GIF").getImage());
 	static Image imageMod = makeRedTransparent(new ImageIcon("images/imageMod.GIF").getImage());
+	static Image imageDel = makeRedTransparent(new ImageIcon("images/imageDel.GIF").getImage());
 	
 	// other images
 	static Image pause = makeRedTransparent(new ImageIcon("images/Pause.PNG").getImage());
@@ -58,19 +60,22 @@ public class NodeEditor extends JFrame implements ActionListener
 	JToggleButton addState = new JToggleButton(new ImageIcon(imageAdd));
 	JToggleButton subState = new JToggleButton(new ImageIcon(imageSub));
 	JToggleButton modState = new JToggleButton(new ImageIcon(imageMod));
+	JToggleButton delState = new JToggleButton(new ImageIcon(imageDel));
 	
 	boolean locked = false;
-	JPanel north;
-	private final static String TITLE = "PEAS - Primary Editor of Abacus States";
+	JPanel north, west, south;
+	private final static String TITLE = "Acronym-Free Abacus Machine Simulator";
 	
 	// machine panel
 	MachinePanel macPanel = new MachinePanel(this);
 	
-	// Simluator
-	Simulator simulator = new Simulator();
-	
 	// Register editor
-	RegisterEditor re = new RegisterEditor();
+	RegisterEditor re = new RegisterEditor(this);
+	
+	// Simluator
+	Simulator simulator = new Simulator(this, re);
+	
+
 	
 	public NodeEditor()
 	{
@@ -79,22 +84,21 @@ public class NodeEditor extends JFrame implements ActionListener
 		// menu bar
 		JMenuBar menuBar = new JMenuBar();
 		JMenu file = new JMenu("File");
-		file.add(save);
+		file.add(newMachine);
+		file.add(saveMachine);
+		file.add(loadMachine);
+		file.addSeparator();
 		file.add(export_xml);
 		file.add(export_tm);
 		file.addSeparator();
 		file.add(close);
 		menuBar.add(file);
-		JMenu mac = new JMenu("Machine");
-		mac.add(modify);
-		mac.addSeparator();
-		mac.add(simulate);
-		menuBar.add(mac);
 		JMenu helpMenu = new JMenu("Help");
 		helpMenu.add(help);
 		menuBar.add(helpMenu);
 		
 		this.setJMenuBar(menuBar);
+		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		for (int x = 0; x < items.length; ++x)		
 			items[x].addActionListener(this);
@@ -107,28 +111,40 @@ public class NodeEditor extends JFrame implements ActionListener
 		bg.add(addState);
 		bg.add(subState);
 		bg.add(modState);
+		bg.add(delState);
 		
 		north = new JPanel();
-		FlowLayout f = new FlowLayout();
-		f.setAlignment(FlowLayout.CENTER);
-		north.setLayout(f);
+		BorderLayout nbl = new BorderLayout();
+		north.setLayout(nbl);
+		north.add(simulator,BorderLayout.CENTER);
+		
+		west = new JPanel();
+		BoxLayout bw = new BoxLayout(west, BoxLayout.PAGE_AXIS);
+		west.setLayout(bw);
+		
+		south = new JPanel();
+		BorderLayout sbl = new BorderLayout();
+		south.setLayout(sbl);
+		south.add(re,BorderLayout.CENTER);
 		
 		addState.setSelected(true);
 		addState.setToolTipText("Insert Add State");
-		north.add(addState);
+		west.add(addState);
 		subState.setToolTipText("Insert Subtract State");
-		north.add(subState);
+		west.add(subState);
 		modState.setToolTipText("Modify States");
-		north.add(modState);
+		west.add(modState);
+		delState.setToolTipText("Delete States");
+		west.add(delState);
 		
-		north.setBackground(babyBlue);
+		west.setBackground(babyBlue);
 		add(north,BorderLayout.NORTH);
+		add(west,BorderLayout.WEST);
 		add(macPanel,BorderLayout.CENTER);
+		add(south,BorderLayout.SOUTH);
 		
 		pack();
 		
-		setDefaultCloseOperation(
-			    JDialog.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() 
 				{
 			    	public void windowClosing(WindowEvent we) 
@@ -145,7 +161,7 @@ public class NodeEditor extends JFrame implements ActionListener
 	
 	public boolean confirmClose()
 	{
-		boolean rv = true;
+		boolean rv = false;
 		
 		Object[] options = {"Save Abacus Machine",
         "Close Window", "Cancel"};
@@ -163,7 +179,7 @@ public class NodeEditor extends JFrame implements ActionListener
 			if (locked)
 			{
 				// this should unlock it
-				simulate.setVisible(false);
+				saveMachine.setVisible(false);
 			}
 			
 			FileData fd = new FileData();
@@ -172,10 +188,11 @@ public class NodeEditor extends JFrame implements ActionListener
 			fd.comments = macPanel.comments;
 			
 			fd.save();
+			rv = true;
 		}
-		else if (n == JOptionPane.CANCEL_OPTION)
+		else if (n == JOptionPane.NO_OPTION)
 		{
-			rv = false;
+			rv = true;
 		}
 		
 		return rv;
@@ -184,6 +201,7 @@ public class NodeEditor extends JFrame implements ActionListener
 	public static final int STATE_ADD = 0;
 	public static final int STATE_SUB = 1;
 	public static final int STATE_MOD = 2;
+	public static final int STATE_DEL = 3;
 	
 	// get the state of the togglebuttons
 	public int getState()
@@ -194,6 +212,8 @@ public class NodeEditor extends JFrame implements ActionListener
 			rv = STATE_ADD;
 		else if (subState.isSelected())
 			rv = STATE_SUB;
+		else if (delState.isSelected())
+			rv = STATE_DEL;
 		
 		return rv;
 	}
@@ -204,6 +224,8 @@ public class NodeEditor extends JFrame implements ActionListener
 			subState.doClick();
 		else if (subState.isSelected())
 			modState.doClick();
+		else if (modState.isSelected())
+			delState.doClick();
 		else
 			addState.doClick();
 	}
@@ -333,17 +355,45 @@ public class NodeEditor extends JFrame implements ActionListener
 		setTitle(TITLE);
 	}
 		
+	public NodeEditor newWindow()
+	{
+		NodeEditor ne = new NodeEditor();
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		ne.setLocation(screenSize.width / 2 - 300,50);
+		
+		ne.setVisible(true);
+		return ne;
+	}
 	
 	public void actionPerformed(ActionEvent e)
 	{
-		if (e.getSource() == close)
+		if (e.getSource() == newMachine) 
+		{
+			this.setVisible(false);
+			newWindow();
+			// i was going to delete the current window but I guess Java does that automagically
+		}
+		else if (e.getSource() == close)
 		{
 			if (confirmClose())
     		{			    		
-	    		re.setVisible(false);
-	    		simulator.setVisible(false);
-	    		setVisible(false);
+	    		System.exit(0);
     		}
+		}
+		else if (e.getSource() == loadMachine)
+		{
+			FileData fd = new FileData();
+			
+			if (fd.load())
+			{
+				NodeEditor ne = newWindow();
+				
+				ne.macPanel.nodes = fd.nodes;
+				ne.re.regs = fd.regs;
+				ne.macPanel.comments = fd.comments;
+				ne.repaint();
+				ne.re.repaint();
+			}
 		}
 		else if (e.getSource() == help)
 		{
@@ -358,23 +408,12 @@ public class NodeEditor extends JFrame implements ActionListener
 				"To switch between tools quickly: Press the right mouse button.\n\n" +
 				"To create comments: Double click on an empty space when in modification mode.\n\n" +
 				"To modify/delete comments: Double click on a comment when in modification mode.\n\n" +
-				"Program by Stanley Bak, April 2006", 
-				"RADISH - Radically Advanced, Devious, Ingenious, and Simple Help",
+				"Program by Stanley Bak, April 2006 \n" + 
+				"Modified by Martin Papesh, May 2012",
+				"Help", 
 				JOptionPane.INFORMATION_MESSAGE);		
 		}
-		else if (e.getSource() == modify)
-		{
-			re.setVisible(true);
-		}
-		else if (e.getSource() == simulate)
-		{
-			if (macPanel.nodes.size() > 0)
-				simulator.begin(this,re);
-			else
-				JOptionPane.showMessageDialog(null,
-						"You must add at least a single node to simulate a computation.");
-		}
-		else if (e.getSource() == save)
+		else if (e.getSource() == saveMachine)
 		{
 			if (locked)
 			{

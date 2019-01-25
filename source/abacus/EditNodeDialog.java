@@ -36,7 +36,7 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 	public EditNodeDialog(Frame parent)
 	{
 		super(parent,true);
-		setTitle("DATES - Dialog for Appropriately Trivial Editing of States");
+		setTitle("State Editor");
 		
 		ok.addActionListener(this);
 		deleteButton.addActionListener(this);

@@ -152,6 +152,135 @@ public class MachinePanel extends ZoomablePanel
 					n.setLocation(new Point(mousePoint.x,mousePoint.y-13));
 					nodes.add(n);
 				}
+				else if (state == NodeEditor.STATE_DEL)
+				{
+					if (selection != null)
+					{ // apply an action to the current selection
+						Node applyTo = null;
+						int index = -1;
+						
+						for (int x = nodes.size()-1; x >= 0; --x)
+						{
+							Node n = (Node)nodes.get(x);
+							
+							if (n.isInNode(mousePoint) == true)
+							{
+								index = x;
+								applyTo = n;
+								break;
+							}
+						}
+						
+						if (applyTo != null && selection instanceof Node)
+						{ // apply it
+							Node selected = (Node)selection;
+							int sel = selected.getSelected();
+							
+							if (sel == Node.SELECTED_OUT)
+							{
+								selected.setOut(applyTo);
+							}
+							else if (sel == Node.SELECTED_OUTEMPTY)
+							{
+								if (selected == applyTo)
+									selected.setOutEmpty(null);
+								else
+									selected.setOutEmpty(applyTo);
+							}
+							else if (sel == Node.SELECTED_NODE && selected == applyTo &&
+									e.getClickCount() == 2)
+							{								
+								Point p = parent.getLocation();
+								p.x += getX() + e.getPoint().x;
+								p.y += getY() + e.getPoint().y;
+								
+								for (int x = nodes.size()-1; x >= 0; --x)
+								{
+									Node n = (Node)nodes.get(x);
+									
+									if (n.getOut() == selected)
+										n.setOut(null);
+									else if (n.getOutEmpty() == selected)
+										n.setOutEmpty(null);
+								}
+								
+								nodes.remove(index);
+								
+								doNotSelect = true;
+							}
+						}
+						else if (selection instanceof Comment)
+						{
+							if (e.getClickCount() == 2)
+							{
+								doNotSelect = true;
+								comments.remove(selection);
+							}
+						}
+						
+						if (selection instanceof Node)
+						{
+							((Node)selection).clearSelection();
+						}
+						else if (selection instanceof Comment)
+							((Comment)selection).clearSelection();
+						
+						selection = null;
+						
+					}
+					
+					if (!doNotSelect && selection == null) // select something
+					{
+						for (int x = 0; x < nodes.size(); ++x)
+						{
+							Node n = (Node)nodes.get(x);
+							
+							if (selection == null && n.select(mousePoint) == true)
+							{
+								selection = n;
+								
+								if (n.getSelected() == Node.SELECTED_NODE)
+								{
+									startPoint = new Point(mousePoint.x, mousePoint.y);
+								}
+								
+								break;
+							}
+							else if (selection != null)
+							{
+								n.clearSelection();
+							}
+						}
+						
+						if (selection == null)
+						{ // try comments
+							for (int x = 0; x < comments.size(); ++x)
+							{
+								Comment c = (Comment)comments.get(x);
+								
+								if (selection == null && c.select(mousePoint))
+								{
+									selection = c;
+									startPoint = new Point(mousePoint.x, mousePoint.y);
+								}
+								else if (selection != null)
+									c.clearSelection();
+							}
+							
+							if (selection == null)
+								startPoint = null;									
+						}
+						else
+						{
+							for (int x = 0; x < comments.size(); ++x)
+							{
+								Comment c = (Comment)comments.get(x);
+								
+								c.clearSelection();
+							}
+						}
+					}
+				}
 				else
 				{
 					if (selection != null)

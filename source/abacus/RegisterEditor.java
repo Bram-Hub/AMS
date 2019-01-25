@@ -24,12 +24,10 @@ import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-public class RegisterEditor extends JFrame implements MouseMotionListener, MouseListener, 
-	ActionListener
+public class RegisterEditor extends JPanel implements MouseMotionListener, MouseListener, ActionListener
 {
 	RegisterPanel regPanel = new RegisterPanel();
 	private static final int scrollButtonWidth = 40;
@@ -37,7 +35,7 @@ public class RegisterEditor extends JFrame implements MouseMotionListener, Mouse
 	public TreeMap regs = new TreeMap(); // maps Integer -> BigInteger
 	private final static BigInteger biMillion = new BigInteger("1000000");
 	private final static BigIntegerBean BIBZero = new BigIntegerBean();
-	private double curReg = 0.0;
+	private double curReg = 1.0;
 	private final static int regWidth = 60;
 	private final static int INIT_HEIGHT = 70;
 	private final static int INIT_WIDTH = 400;
@@ -50,15 +48,14 @@ public class RegisterEditor extends JFrame implements MouseMotionListener, Mouse
 	public static final Color compBlue = new Color(0,146,255);
 	public static final Color babyBlue = new Color(67,203,255);
 	private static final int buttonTriangleHeightOffset = 10;
+	private NodeEditor ne;
 	
 	private int selectedReg = -1;
 	private boolean locked = false;
-	private final String TITLE = "PEAR - Pleasing Editor for Abacus Registers";
 	
-	public RegisterEditor()
-	{
-		setTitle(TITLE);
-		
+	public RegisterEditor(NodeEditor ne)
+	{		
+		this.ne = ne;
 		regPanel.addMouseListener(this);
 		regPanel.addMouseMotionListener(this);
 		
@@ -73,14 +70,6 @@ public class RegisterEditor extends JFrame implements MouseMotionListener, Mouse
 		south.add(jump);
 		jump.addActionListener(this);
 		add(south,BorderLayout.SOUTH);
-		pack();
-		
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		
-		setLocation(screenSize.width / 2 - getWidth() / 2,
-				screenSize.height / 2 - getHeight() / 2);
-		
-		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
 	}
 	
 	public void clearSelection()
@@ -93,18 +82,24 @@ public class RegisterEditor extends JFrame implements MouseMotionListener, Mouse
 	{
 		selectedReg = -1;
 		locked = true;
-		backup = (TreeMap)regs.clone();
-		setTitle(TITLE + " (locked)");
 	}
 	
 	public void unlock()
 	{
 		locked = false;
-		regs = (TreeMap)backup.clone();
+
 		repaint();
-		setTitle(TITLE);
 	}
 	
+	public void initial()
+	{
+		backup = (TreeMap)regs.clone();
+	}
+	
+	public void restore()
+	{
+		regs = (TreeMap)backup.clone();
+	}
 	/**
 	 * Add a pebble to this register
 	 * @param reg the register number to add to
@@ -194,13 +189,13 @@ public class RegisterEditor extends JFrame implements MouseMotionListener, Mouse
 		private void drawBins(Graphics2D g)
 		{
 			long init = Math.round(Math.floor(curReg));
-			double end = 1 + init + (INIT_WIDTH) / regWidth;
+			double end = 11 + init + (INIT_WIDTH) / regWidth;
 			double startX = (init - curReg) * regWidth + scaleX(scrollButtonWidth);
 			g.setColor(Color.black);			
 			
 			for (long num = init; num < end;++num, startX += regWidth)
 			{
-				if (num >= 0 && num <= Integer.MAX_VALUE)
+				if (num >= 1 && num <= Integer.MAX_VALUE)
 				{
 					int regNum = (int)num;
 					BigInteger amount = getRegisterContents(regNum).val;
@@ -236,7 +231,7 @@ public class RegisterEditor extends JFrame implements MouseMotionListener, Mouse
 		
 		private void strechToFill(Graphics2D g)
 		{
-			double scaleX = (double)getWidth() / INIT_WIDTH;
+			double scaleX = (double)getHeight()*5.5 / INIT_WIDTH;
 			double scaleY = (double)getHeight() / INIT_HEIGHT;
 			
 			g.scale(scaleX,scaleY);
@@ -421,8 +416,8 @@ public class RegisterEditor extends JFrame implements MouseMotionListener, Mouse
 							{
 								curReg -= dx;
 								
-								if (curReg < 0)
-									curReg = 0;
+								if (curReg < 1)
+									curReg = 1;
 							}
 							
 							held += dif;
@@ -496,7 +491,7 @@ public class RegisterEditor extends JFrame implements MouseMotionListener, Mouse
 		double startX = (init - curReg) * regWidth + scaleX(scrollButtonWidth);
 		int rv = -1;
 		
-		for (long num = init; num < end && num >= 0;++num, startX += regWidth)
+		for (long num = init; num < end && num >= 1;++num, startX += regWidth)
 		{
 			if (num <= Integer.MAX_VALUE)
 			{
@@ -617,12 +612,12 @@ public class RegisterEditor extends JFrame implements MouseMotionListener, Mouse
 			    {
 			    	int i = Integer.parseInt(s);
 			    	
-			    	curReg = Math.max(0,i);
+			    	curReg = Math.max(1,i);
 			    	repaint();
 			    }
 			    catch (NumberFormatException er)
 			    {
-			    	JOptionPane.showMessageDialog(null, "You didn't enter an integer between 0 and " +
+			    	JOptionPane.showMessageDialog(null, "You didn't enter an integer between 1 and " +
 			    			Integer.MAX_VALUE + ": '" + s + "'");
 			    }
 			    

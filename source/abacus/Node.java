@@ -14,7 +14,7 @@ import java.awt.geom.Line2D;
 
 public class Node
 {
-	private int register = 0;
+	private int register = 1;
 	private boolean plus = false;
 	private Node out = null;
 	private Node outEmpty = null; // only if this node is empty

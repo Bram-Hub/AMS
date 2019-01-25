@@ -2,102 +2,97 @@ package abacus;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Image;
+import java.awt.Panel;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.BorderLayout;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JLabel;
-import javax.swing.JSlider;
+import javax.swing.JOptionPane;
 
-public class Simulator extends JFrame implements ActionListener
+public class Simulator extends JPanel implements ActionListener
 {	
 	private static ImageIcon resetIcon = new ImageIcon(NodeEditor.resetIm);// NodeEditor.reset;
-	private static Image pause = NodeEditor.pause;
-	private static Image play = NodeEditor.play;
-	private static Image fastForward = NodeEditor.fastForward;
+	private static ImageIcon pauseIcon = new ImageIcon(NodeEditor.pause);
+	private static ImageIcon playIcon = new ImageIcon(NodeEditor.play);
+	private static ImageIcon fastForwardIcon = new ImageIcon(NodeEditor.fastForward);
 	
-	private JSlider slider = new JSlider(JSlider.HORIZONTAL,0,1000,0);
 	private int realNumSteps = 0;
-	private JLabel haltLabel = new JLabel("");
+	private JLabel haltLabel = new JLabel("              ");
 	private JLabel numSteps = new JLabel("Number of Steps: 0");
 	private JLabel numRegisters = new JLabel("Number of Registers: 0");
-	private JButton done = new JButton("Done");
 	private JButton resetButton = new JButton("",resetIcon);
+	private JButton playButton  = new JButton("",playIcon);
+	private JButton pauseButton = new JButton("",pauseIcon);
+	private JButton fastForwardButton = new JButton("",fastForwardIcon);
 	
 	private Node curNode = null;
+	private int speed = 0;
+	private boolean firstClick = true;
 	
 	NodeEditor ne = null;
 	RegisterEditor re = null;
 	boolean resetMachine = false;
 	
-	public Simulator()
-	{
-		setTitle("PLUMS - Pleasant Looking and Useful Machine Simulator");
+	public Simulator(NodeEditor ne, RegisterEditor re)
+	{	
+		this.ne = ne;
+		this.re = re;
 		
-		JLabel pauseLabel = new JLabel(new ImageIcon(pause));
-		JLabel playLabel = new JLabel(new ImageIcon(play));
-		JLabel fastForwardLabel = new JLabel(new ImageIcon(fastForward));
-		
-		done.addActionListener(this);
 		resetButton.addActionListener(this);
+		playButton.addActionListener(this);
+		pauseButton.addActionListener(this);
+		fastForwardButton.addActionListener(this);
+			
+		setSize(480,120);
+		BorderLayout bl = new BorderLayout();
+		setLayout(bl);
 		
-		setDefaultCloseOperation(
-			    JDialog.DO_NOTHING_ON_CLOSE);
-		addWindowListener(new WindowAdapter() 
-				{
-			    	public void windowClosing(WindowEvent we) 
-			    	{
-			    		ne.unlock();
-						re.unlock();
-						setVisible(false);
-			    	}
-				});
+		JPanel west = new JPanel();
+		west.add(resetButton);
+		west.add(playButton);
+		west.add(pauseButton);
+		west.add(fastForwardButton);
 		
-		setSize(480,160);
-		this.setResizable(false);
-		setLayout(null);
+		JPanel east = new JPanel();
+		east.add(numRegisters);
+		east.add(numSteps);
 		
-		add(slider);
-		slider.setBounds(15,5,getWidth() - 30,20);
-		int y = slider.getY() + slider.getHeight() - 3;
-		
-		add(resetButton);
-		resetButton.setBounds(15,y + 48,48,48);
-		
-		add(pauseLabel);
-		pauseLabel.setBounds(slider.getX(),y,40,40);
-		
-		add(playLabel);
-		playLabel.setBounds(slider.getX() + slider.getWidth() / 2 - 20,y,40,40);
-		
-		add(fastForwardLabel);
-		fastForwardLabel.setBounds(slider.getX() + slider.getWidth() - 40 ,y,40,40);
-		
-		add(haltLabel);
+		add(west, BorderLayout.WEST);
+		add(haltLabel, BorderLayout.CENTER);
 		haltLabel.setForeground(Color.red);
-		haltLabel.setBounds(resetButton.getX() + resetButton.getWidth() + 30,y + 30,150,20);
-		
-		add(numRegisters);
-		numRegisters.setBounds(resetButton.getX() + resetButton.getWidth() + 30,y + 50,150,20);
-		
-		add(numSteps);
-		numSteps.setBounds(resetButton.getX() + resetButton.getWidth() + 30,y + 70,150,20);
-		
-		add(done);
-		done.setBounds(getWidth() - 125, y + 70,100,25);
-		
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		setLocation(screenSize.width / 2 - getWidth() / 2, screenSize.height / 2 - getHeight() / 2);
+		add(east, BorderLayout.EAST);
 		
 		Player p = new Player();
 		p.start();
+	}
+	
+	// begin a simulation
+	public void begin()
+	{		
+		if (firstClick) {
+			ne.clearSelection();
+			re.clearSelection();
+			re.initial();
+			haltLabel.setText("");
+			curNode = (Node)ne.macPanel.nodes.get(0);
+			firstClick = false;
+			numRegisters.setText("Number of Registers: " + ne.macPanel.getRegCount());
+		}
+		ne.lock();
+		re.lock();
+		speed = 100;
+	}
+	
+	public void pause()
+	{
+		speed = 0;
+		ne.unlock();
+		re.unlock();
 	}
 
 	public void actionPerformed(ActionEvent e)
@@ -106,34 +101,29 @@ public class Simulator extends JFrame implements ActionListener
 		{
 			resetMachine = true;
 		}
-		else if (e.getSource() == done)
-		{			
-			ne.unlock();
-			re.unlock();
-			
-			setVisible(false);
+		else if (e.getSource() == playButton)
+		{
+			if (ne.macPanel.nodes.size() > 0)
+				begin();
+			else
+				JOptionPane.showMessageDialog(null,
+						"You must add at least a single node to simulate a computation.");
 		}
-	}
-	
-	// begin a simulation
-	public void begin(NodeEditor ne, RegisterEditor re)
-	{		
-		this.ne = ne;
-		this.re = re;
+		else if (e.getSource() == pauseButton)
+		{
+			pause();
+		}
 		
-		slider.setValue(0);
-		ne.lock();
-		re.lock();
-		ne.clearSelection();
-		re.clearSelection();
-		haltLabel.setText("");
-		numRegisters.setText("Number of Registers: " + ne.macPanel.getRegCount());
-		realNumSteps = 0;
-		
-		curNode = (Node)ne.macPanel.nodes.get(0);
-		
-		re.setVisible(true);
-		setVisible(true);
+		else if (e.getSource() == fastForwardButton)
+		{
+			if (ne.macPanel.nodes.size() > 0) {
+				begin();
+				speed = 750;
+			}
+			else
+				JOptionPane.showMessageDialog(null,
+						"You must add at least a single node to simulate a computation.");
+		}
 	}
 	
 	class Player extends Thread
@@ -204,7 +194,7 @@ public class Simulator extends JFrame implements ActionListener
 			if (curNode != null && curNode.isPauseState())
 			{ // pause!
 				curNode.simSelect(Node.SELECTED_NODE);
-				slider.setValue(0);
+				speed = 0;
 			}
 		}
 		
@@ -219,15 +209,16 @@ public class Simulator extends JFrame implements ActionListener
 					realNumSteps = 0;
 					curNode = (Node)ne.macPanel.nodes.get(0);
 					re.unlock();
-					re.lock();
+					re.restore();
 					ne.clearSelection();
 					re.clearSelection();					
 					
 					resetMachine = false;
+					firstClick = true;
 				}
 				else
 				{				
-					int val = slider.getValue();
+					int val = speed;
 					if (isVisible() && val > 0 && curNode != null)
 					{ // slider is between 1 and 1000
 						

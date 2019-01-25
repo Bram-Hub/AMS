@@ -4,6 +4,8 @@
 Stan Bak  
 2010:
 Matthew Turnbull  
+2012:
+Martin Papesh
 
 ## About
 AMS is an abacus machine simulator program. You can create, edit, save, and then later load your abacus machine. Simulating features are also provided.
@@ -14,7 +16,7 @@ This program is distributed under the GNU GPL, which pretty much means that 1) i
 
 Software requirements: JDK1.5+
 
-To use the run and build scripts ("yams" and "yams_build" in Linux - "yams.bat" and "yams_build.bat" in Windows) the JRE/JDK needs to be configured in your operating system's PATH environment variable.
+To use the run and build scripts ("ams" and "ams_build" in Linux - "ams.bat" and "ams_build.bat" in Windows) the JRE/JDK needs to be configured in your operating system's PATH environment variable.
 
 
 
