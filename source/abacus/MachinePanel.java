@@ -195,7 +195,7 @@ public class MachinePanel extends ZoomablePanel
 					if (nodes.size() == 0)
 					    n.setInitialState(true);
 					nodes.add(n);
-					re.refreshReg(); // refresh register count
+					//re.refreshReg(); // refresh register count
 				}
 				else if (state == NodeEditor.STATE_SUB)
 				{
