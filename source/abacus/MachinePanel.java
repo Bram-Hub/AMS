@@ -27,6 +27,7 @@ public class MachinePanel extends ZoomablePanel
 	Point mousePoint, lastMousePoint, startPoint;
 	EditNodeDialog end;
 	private boolean locked = false;
+	public static boolean isClicked=false;
 	
 	Object selection = null;
 	
@@ -127,10 +128,7 @@ public class MachinePanel extends ZoomablePanel
 	class MouseAction implements MouseListener, MouseMotionListener, MouseWheelListener
 	{
 		public void mouseClicked(MouseEvent e)
-		{ }
-
-		public void mousePressed(MouseEvent e)
-		{ 
+		{
 			Point point = e.getPoint();
 			if (!isZoomAction(point) && !locked && e.getButton() == MouseEvent.BUTTON1)
 			{
@@ -281,8 +279,20 @@ public class MachinePanel extends ZoomablePanel
 						}
 					}
 				}
-				else
+				else if (state == NodeEditor.STATE_MOD)
 				{
+				System.out.print("Checking nodes to set isClicked\n");
+				for (int x = nodes.size()-1; x >= 0; --x)
+					{
+						Node n = (Node)nodes.get(x);
+						
+						if (n.isInNode(mousePoint) == true)
+						{
+							isClicked=true;
+							System.out.print("Setting isClicked to true!\n");
+							break;
+						}
+					}
 					if (selection != null)
 					{ // apply an action to the current selection
 						Node applyTo = null;
@@ -467,6 +477,10 @@ public class MachinePanel extends ZoomablePanel
 					}
 					
 				}
+				else
+				{
+					System.out.print("ERROR! Invalid state\n");
+				}
 				
 				repaint();
 			}
@@ -477,6 +491,9 @@ public class MachinePanel extends ZoomablePanel
 			}
 		}
 
+		public void mousePressed(MouseEvent e)
+		{ }
+
 		public void mouseReleased(MouseEvent e)
 		{ 
 			startPoint = null;
@@ -486,7 +503,7 @@ public class MachinePanel extends ZoomablePanel
 		{ }
 
 		public void mouseExited(MouseEvent e)
-		{ 
+		{
 			previewImage = null;
 			repaint();
 		}

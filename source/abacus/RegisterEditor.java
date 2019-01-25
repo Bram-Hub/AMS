@@ -107,6 +107,7 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 	public void addOne(int reg)
 	{
 		BigIntegerBean contents = getRegisterContents(reg);
+
 		setRegisterContents(reg,contents.val.add(BigInteger.ONE));
 		selectedReg = reg;
 		repaint();
@@ -125,8 +126,13 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 		if (!contents.val.equals(BigInteger.ZERO))
 		{
 			rv = true;
+
 			setRegisterContents(reg,contents.val.subtract(BigInteger.ONE));
 		}
+
+
+
+
 		
 		selectedReg = reg;
 		repaint();
@@ -207,6 +213,26 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 					g.setColor((regNum == selectedReg && locked) ? Color.red : darkGray);
 					g.draw(r);
 					g.setFont(normal);
+					
+					RoundRectangle2D.Double q = new RoundRectangle2D.Double((int)(startX + 5), 5, regWidth - 10,INIT_HEIGHT - 60,REG_ARC,REG_ARC);
+					
+					g.setColor(Color.gray);
+					g.fill(q);
+					g.setColor((regNum == selectedReg && locked) ? Color.red : darkGray);
+					g.draw(q);
+					g.setFont(normal);
+					
+					g.drawString("+",(int)(startX + 27),INIT_HEIGHT - 57);
+					
+					RoundRectangle2D.Double s = new RoundRectangle2D.Double((int)(startX + 5), 35, regWidth - 10,INIT_HEIGHT - 60,REG_ARC,REG_ARC);
+					
+					g.setColor(Color.gray);
+					g.fill(s);
+					g.setColor((regNum == selectedReg && locked) ? Color.red : darkGray);
+					g.draw(s);
+					g.setFont(normal);
+					
+					g.drawString("-",(int)(startX + 28),INIT_HEIGHT - 27);
 					
 					if (regNum < 1000)
 						g.drawString("Reg #" + regNum,(int)startX+10,INIT_HEIGHT-9);
@@ -541,35 +567,53 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 				
 				int clicked = getClickedRegister(real);
 				
+
+
 				if (clicked != -1)
 				{
-					BigInteger cur = getRegisterContents(clicked).val;
-					
-					String s = (String)JOptionPane.showInputDialog(
-		                    null,
-		                    "What would you like to set this register to?",
-		                    "Register " + clicked,
-		                    JOptionPane.PLAIN_MESSAGE,
-		                    null,
-		                    null,
-		                    cur.toString());
+					if (real.y <= 15)
+					{
 
-					//If a string was returned
-					if ((s != null) && (s.length() > 0)) {
-					    try
-					    {
-					    	BigInteger bi = new BigInteger(s);
-					    	setRegisterContents(clicked, bi);
-					    	repaint();
-					    }
-					    catch (NumberFormatException er)
-					    {
-					    	JOptionPane.showMessageDialog(null, "You didn't enter an integer: '" + s + "'");
-					    }
-					    
-					    return;
+						addOne(clicked);
+						return;
 					}
+					else if (real.y >= 35)
+					{
+
+						subOne(clicked);
+						return;
+					}
+					else
+					{
+
+						BigInteger cur = getRegisterContents(clicked).val;
 					
+						String s = (String)JOptionPane.showInputDialog(
+								null,
+								"What would you like to set this register to?",
+								"Register " + clicked,
+								JOptionPane.PLAIN_MESSAGE,
+								null,
+								null,
+								cur.toString());
+
+						//If a string was returned
+						if ((s != null) && (s.length() > 0)) {
+							try
+							{
+								BigInteger bi = new BigInteger(s);
+
+								setRegisterContents(clicked, bi);
+								repaint();
+							}
+							catch (NumberFormatException er)
+							{
+								JOptionPane.showMessageDialog(null, "You didn't enter an integer: '" + s + "'");
+							}
+					    
+							return;
+						}
+					}
 					
 				}
 			}

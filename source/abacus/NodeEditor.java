@@ -150,11 +150,14 @@ public class NodeEditor extends JFrame implements ActionListener
 			    	public void windowClosing(WindowEvent we) 
 			    	{
 			    		if (confirmClose())
-			    		{			    		
+						{
 				    		re.setVisible(false);
 				    		simulator.setVisible(false);
 				    		setVisible(false);
 			    		}
+						else {
+							return;
+						}
 			    	}
 				});
 	}
@@ -162,20 +165,28 @@ public class NodeEditor extends JFrame implements ActionListener
 	public boolean confirmClose()
 	{
 		boolean rv = false;
-		
+// FAULTY CODE FOR "CANCEL" OPTION IS REMOVED VIA COMMENT. SEE README.TXT FOR EXPLANATION		
+//		Object[] options = {"Save Abacus Machine",
+//        "Close Window", "Cancel"};
 		Object[] options = {"Save Abacus Machine",
-        "Close Window", "Cancel"};
+        "Close Window"};
 		int n = JOptionPane.showOptionDialog(this,
 			"Would you like to save your Abacus Machine?",
 			"Save Query",
-			JOptionPane.YES_NO_CANCEL_OPTION,
+//			JOptionPane.YES_NO_CANCEL_OPTION,
+			JOptionPane.YES_NO_OPTION,
 			JOptionPane.QUESTION_MESSAGE,
 			null,     //don't use a custom Icon
 			options,  //the titles of buttons
-			options[2]); //default button title
+			options[0]); //default button title
 		
 		if (n == JOptionPane.YES_OPTION)
 		{
+			try {
+				Thread.sleep(1000);
+			} catch(InterruptedException ex) {
+				Thread.currentThread().interrupt();
+			}
 			if (locked)
 			{
 				// this should unlock it
@@ -183,9 +194,9 @@ public class NodeEditor extends JFrame implements ActionListener
 			}
 			
 			FileData fd = new FileData();
-			fd.nodes = macPanel.nodes;
-			fd.regs = re.regs;
-			fd.comments = macPanel.comments;
+			fd.setNodes(macPanel.nodes);
+			fd.setRegs(re.regs);
+			fd.setComments(macPanel.comments);
 			
 			fd.save();
 			rv = true;
@@ -194,7 +205,10 @@ public class NodeEditor extends JFrame implements ActionListener
 		{
 			rv = true;
 		}
-		
+/*		else if (n == JOptionPane.CANCEL_OPTION)
+		{
+			rv=false;
+		}*/
 		return rv;
 	}
 	
@@ -275,8 +289,6 @@ public class NodeEditor extends JFrame implements ActionListener
 	{
 		int w = source.getWidth(null);
 		int h = source.getHeight(null);
-
-		// System.out.println("width = " + w);
 
 		int[] cols = getAllColors(source);
 
@@ -375,8 +387,15 @@ public class NodeEditor extends JFrame implements ActionListener
 		}
 		else if (e.getSource() == close)
 		{
+			System.out.print("getsource is close\n");
 			if (confirmClose())
-    		{			    		
+    		{
+				System.out.print("confirmClose is TRUE\n");
+				try {
+					Thread.sleep(1000);
+				} catch(InterruptedException ex) {
+					Thread.currentThread().interrupt();
+				}
 	    		System.exit(0);
     		}
 		}
@@ -388,9 +407,9 @@ public class NodeEditor extends JFrame implements ActionListener
 			{
 				NodeEditor ne = newWindow();
 				
-				ne.macPanel.nodes = fd.nodes;
-				ne.re.regs = fd.regs;
-				ne.macPanel.comments = fd.comments;
+				ne.macPanel.nodes = fd.getNodes();
+				ne.re.regs = fd.getRegs();
+				ne.macPanel.comments = fd.getComments();
 				ne.repaint();
 				ne.re.repaint();
 			}
@@ -423,9 +442,12 @@ public class NodeEditor extends JFrame implements ActionListener
 			else
 			{
 				FileData fd = new FileData();
-				fd.nodes = macPanel.nodes;
-				fd.regs = re.regs;
-				fd.comments = macPanel.comments;
+				//fd.nodes = macPanel.nodes;
+				//fd.regs = re.regs;
+				//fd.comments = macPanel.comments;
+        fd.setNodes(macPanel.nodes);
+        fd.setRegs(re.regs);
+        fd.setComments(macPanel.comments);
 				
 				fd.save();
 			}

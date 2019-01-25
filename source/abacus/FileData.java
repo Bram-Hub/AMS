@@ -16,9 +16,9 @@ import javax.swing.JOptionPane;
 // a bean used for saving and loading the data
 public class FileData
 {
-	public ArrayList comments = new ArrayList();
-	public ArrayList nodes = new ArrayList();
-	public TreeMap regs = new TreeMap();
+	private ArrayList comments = new ArrayList();
+	private ArrayList nodes = new ArrayList();
+	private TreeMap regs = new TreeMap();
 	final static FileDialog fileChooser = new FileDialog(new Frame());
 	
 	public FileData() {}
@@ -73,6 +73,7 @@ public class FileData
 		                 new BufferedOutputStream(
 		                     new FileOutputStream(filename)));
 				e.writeObject(this);
+        //e.writeObject(nodes);
 				e.close();
 	    	}
 	    	catch (Exception e)
@@ -101,6 +102,7 @@ public class FileData
 		                new BufferedInputStream(
 		                    new FileInputStream(filename)));
 		    	FileData result = (FileData)d.readObject();
+          //nodes = (ArrayList)d.readObject();
 				d.close();
 				
 				this.nodes = result.nodes;

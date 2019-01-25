@@ -214,20 +214,40 @@ MouseListener, MouseMotionListener
 	public void mouseClicked(MouseEvent arg0){	}
 	public void mousePressed(MouseEvent e) 
 	{  
-		if (e.getButton() == MouseEvent.BUTTON2)
+		
+//		if (e.getButton() == MouseEvent.BUTTON1)
+
+//	This section of code handles the left-mouse drag scrolling
+		if (e.getButton() == MouseEvent.BUTTON1)
 		{
-			if (e.getClickCount() == 2)
+			/*if (MachinePanel.state == NodeEditor.STATE_MOD)
 			{
-				moveX = moveY = zoomFactor = curZoomFactor = 0;
-				repaint();
+				System.out.print("Correct\n");
+			}*/
+			try
+			{
+				Thread.sleep(100);
 			}
+			catch (Exception f) { }
+			if (!MachinePanel.isClicked)
+			{
+				System.out.print("isClicked is false!\n");
+				if (e.getClickCount() == 2)
+				{
+					moveX = moveY = zoomFactor = curZoomFactor = 0;
+					repaint();
+				}
 			
-			Point p = e.getPoint();
+				Point p = e.getPoint();
 			
-			lastX = p.x;
-			lastY = p.y;
+				lastX = p.x;
+				lastY = p.y;
+			}
 		}
-		else if (e.getButton() == MouseEvent.BUTTON1)
+//		else if (e.getButton() == MouseEvent.BUTTON1)
+
+//	This section of code handles all other left-clicks.
+		if (e.getButton() == MouseEvent.BUTTON1)
 		{
 			Point p = e.getPoint();
 			
@@ -246,7 +266,6 @@ MouseListener, MouseMotionListener
 					mousePoint = p;
 				}
 			}
-			
 		}
 	}
 	
@@ -285,20 +304,25 @@ MouseListener, MouseMotionListener
 	
 	public void mouseReleased(MouseEvent e) 
 	{  
-		if (e.getButton() == MouseEvent.BUTTON2)
+//		if (e.getButton() == MouseEvent.BUTTON2)
+		if (e.getButton() == MouseEvent.BUTTON1)
 		{
-			Point p = e.getPoint();
-			
-			double dx = lastX - p.x;
-			double dy = p.y - lastY;
-			double scale = getScale();
-			
-			moveX += dx/scale;
-			moveY += dy/scale;
-			
-			lastX = lastY = -1;
-			
-			repaint();
+			if (!MachinePanel.isClicked)
+			{
+				Point p = e.getPoint();
+				
+				double dx = lastX - p.x;
+				double dy = p.y - lastY;
+				double scale = getScale();
+				
+				moveX += dx/scale;
+				moveY += dy/scale;
+				
+				lastX = lastY = -1;
+				
+				repaint();
+			}
+			MachinePanel.isClicked=false;
 		}
 		if (e.getButton() == MouseEvent.BUTTON1)
 			mouseDown = false;

@@ -5,9 +5,34 @@ Stan Bak
 2010:
 Matthew Turnbull  
 2012:
-Martin Papesh
+Martin Papesh  
+2013:
+Tim Treese
+
 
 ## About
+---VERSION 2.2 RELEASE NOTES--------------------------------------
+IMPROVEMENTS OVER 2.1:
+
+1) Middle-mouse click-and-drag to scan the canvas now works with left-mouse (more intuitive and works on mice with no middle button).
+   To move nodes using the "Modify" tool, select them once (they should have a red outline) and then drag them.
+
+2) In 2.1, in some cases, when the close dialog is brought up (either by clicking the upper-right "x" or File>Exit), when "cancel" is selected, the program still exits.
+   As a temporary fix (as this could cause massive unexpected data loss), the "cancel" option has been removed to protect the user. The previous code has been commented out to allow for easy reworking if the bug can be identified.
+
+3) Specific buttons to increment and decrement each register have been added for much quicker initial register-setting (when numbers are small).
+
+4) An error was fixed in which the save file option would save empty files on newer versions of Java. This fix is due to Michael Usher (usherm@rpi.edu).
+
+KNOWN BUGS:
+
+1) As part of the temporary solution described in improvement 2, there is currently no "cancel" option in the close dialog. This is not ideal.
+
+2) In some cases, clicks on the register panel do not register correctly. When this error is present, the program detects the clicks as appearing far further left than they are (i.e. clicking on register 2 activates the register 1 dialog).
+   The source of the error is not known. It appears as though the register panel class is fed a bad point. It appears that on some machines, this error never manifests, and on other machines, it manifests all the time. It could be a Java version issue. More research is needed
+
+
+---VERSION 2.1 RELEASE NOTES--------------------------------------
 AMS is an abacus machine simulator program. You can create, edit, save, and then later load your abacus machine. Simulating features are also provided.
 There is a help menu that I recommend you read, since many action have short cuts that may not appear obvious. For example you can drag around the work area by dragging with the middle mouse button, or zoom by scrolling with the mouse. 
 This program is distributed under the GNU GPL, which pretty much means that 1) it might not work and 2) if you redistribute it, make sure you provide the source. For a more formal statement see LISENSE.txt.
