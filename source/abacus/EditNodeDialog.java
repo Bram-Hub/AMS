@@ -20,12 +20,12 @@ import javax.swing.JTextField;
 public class EditNodeDialog extends JDialog implements ActionListener, ItemListener
 {
 	private JTextField tf = new JTextField(14);
-	private String[] choices = { "Addition State", "Subtraction State" };
-	private JComboBox combo = new JComboBox(choices);
-	private JCheckBox deleteCheck = new JCheckBox("Delete this State");
+	//private String[] choices = { "Addition State", "Subtraction State" };
+	//private JComboBox combo = new JComboBox(choices);
+	//private JCheckBox deleteCheck = new JCheckBox("Delete this State");
 	private JCheckBox pauseCheck = new JCheckBox("Pause State");
 	private JCheckBox initial = new JCheckBox("Initial");
-	private JButton deleteButton = new JButton("Delete");
+	//private JButton deleteButton = new JButton("Delete");
 	private JButton ok = new JButton("Ok");
 	
 	private boolean pressedOk, deleted;
@@ -39,22 +39,22 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 		setTitle("State Editor");
 		
 		ok.addActionListener(this);
-		deleteButton.addActionListener(this);
+	//	deleteButton.addActionListener(this);
 		tf.addActionListener(this);
 		
-		deleteCheck.addItemListener(this);
-		deleteButton.setEnabled(false);
+	//	deleteCheck.addItemListener(this);
+	//	deleteButton.setEnabled(false);
 		
 		setLayout(new FlowLayout());
 		setPreferredSize(new Dimension(405,100));
 		
 		add(new JLabel("Register:"));
 		add(tf);
-		add(combo);
-		add(deleteCheck);
+	//	add(combo);
+	//	add(deleteCheck);
 		add(pauseCheck);
 		add(initial);
-		add(deleteButton);
+	//	add(deleteButton);
 		add(ok);
 		
 		pack();
@@ -78,14 +78,14 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 		
 		pressedOk = false;
 		deleted = false;
-		deleteCheck.setSelected(false);
+	//	deleteCheck.setSelected(false);
 		this.initial.setSelected(initial);
 		if (initial)
 			this.initial.setEnabled(false);
 		else
 			this.initial.setEnabled(true);
 		
-		combo.setSelectedIndex(n.isPlus() ? 0 : 1);
+		//combo.setSelectedIndex(n.isPlus() ? 0 : 1);
 		tf.setText("" + n.getRegister());
 		tf.setSelectionStart(0);
 		tf.setSelectionEnd(tf.getText().length());
@@ -95,7 +95,7 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 		
 		if (pressedOk)
 		{
-			n.setPlus(sAddition);
+			//n.setPlus(sAddition);
 			n.setRegister(register);
 			n.setPauseState(pauseCheck.isSelected());
 			
@@ -113,16 +113,17 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 
 	public void actionPerformed(ActionEvent e)
 	{
-		if (e.getSource() == deleteButton)
+	/*	if (e.getSource() == deleteButton)
 		{
 			deleted = true;
 			setVisible(false);
 		}
-		else if (e.getSource() == ok || e.getSource() == tf)
+		*/
+		if (e.getSource() == ok || e.getSource() == tf)
 		{
 			pressedOk = true;
 			sInitial = initial.isSelected();
-			sAddition = combo.getSelectedIndex() == 0;
+			//sAddition = combo.getSelectedIndex() == 0;
 			
 			try
 			{
@@ -139,9 +140,10 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 
 	public void itemStateChanged(ItemEvent e)
 	{
-		if (e.getSource() == deleteCheck)
+		/*if (e.getSource() == deleteCheck)
 		{
 			deleteButton.setEnabled(deleteCheck.isSelected());
 		}
+		*/
 	}
 }

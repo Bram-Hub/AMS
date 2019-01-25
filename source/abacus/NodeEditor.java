@@ -3,6 +3,7 @@ package abacus;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -48,9 +49,11 @@ public class NodeEditor extends JFrame implements ActionListener
 	
 	// other images
 	static Image pause = makeRedTransparent(new ImageIcon("images/Pause.PNG").getImage());
+	static Image resetAll = makeRedTransparent(new ImageIcon("images/ResetAll.PNG").getImage());
 	static Image resetIm = makeRedTransparent(new ImageIcon("images/Reset.PNG").getImage());
 	static Image play = makeRedTransparent(new ImageIcon("images/Play.PNG").getImage());
 	static Image fastForward = makeRedTransparent(new ImageIcon("images/FastForward.PNG").getImage());
+	static Image step = makeRedTransparent(new ImageIcon("images/Step.PNG").getImage());
 	
 	static Image transAdd = makeHazy(imageAdd);
 	static Image transSub = makeHazy(imageSub);
@@ -64,7 +67,7 @@ public class NodeEditor extends JFrame implements ActionListener
 	
 	boolean locked = false;
 	JPanel north, west, south;
-	private final static String TITLE = "Acronym-Free Abacus Machine Simulator";
+	private final static String TITLE = "Abacus Machine Simulator";
 	
 	// machine panel
 	MachinePanel macPanel = new MachinePanel(this);
@@ -98,7 +101,7 @@ public class NodeEditor extends JFrame implements ActionListener
 		menuBar.add(helpMenu);
 		
 		this.setJMenuBar(menuBar);
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		
 		for (int x = 0; x < items.length; ++x)		
 			items[x].addActionListener(this);
@@ -108,9 +111,9 @@ public class NodeEditor extends JFrame implements ActionListener
 		
 		// buttons
 		ButtonGroup bg = new ButtonGroup(); 
+		bg.add(modState);
 		bg.add(addState);
 		bg.add(subState);
-		bg.add(modState);
 		bg.add(delState);
 		
 		north = new JPanel();
@@ -127,13 +130,13 @@ public class NodeEditor extends JFrame implements ActionListener
 		south.setLayout(sbl);
 		south.add(re,BorderLayout.CENTER);
 		
-		addState.setSelected(true);
+		modState.setSelected(true);
+		modState.setToolTipText("Modify States");
+		west.add(modState);
 		addState.setToolTipText("Insert Add State");
 		west.add(addState);
 		subState.setToolTipText("Insert Subtract State");
 		west.add(subState);
-		modState.setToolTipText("Modify States");
-		west.add(modState);
 		delState.setToolTipText("Delete States");
 		west.add(delState);
 		
@@ -150,10 +153,16 @@ public class NodeEditor extends JFrame implements ActionListener
 			    	public void windowClosing(WindowEvent we) 
 			    	{
 			    		if (confirmClose())
-						{
+			    		{
+			    			boolean allHidden=true;
 				    		re.setVisible(false);
 				    		simulator.setVisible(false);
 				    		setVisible(false);
+				    		Frame[] frames = NodeEditor.this.getFrames();
+			    			for(int i=0;i<frames.length;i++){
+			    				if(frames[i].isVisible()) allHidden=false;
+			    			}
+			    			if(allHidden) System.exit(0);
 			    		}
 						else {
 							return;
@@ -381,7 +390,7 @@ public class NodeEditor extends JFrame implements ActionListener
 	{
 		if (e.getSource() == newMachine) 
 		{
-			this.setVisible(false);
+			this.setVisible(true);
 			newWindow();
 			// i was going to delete the current window but I guess Java does that automagically
 		}
@@ -397,6 +406,7 @@ public class NodeEditor extends JFrame implements ActionListener
 					Thread.currentThread().interrupt();
 				}
 	    		System.exit(0);
+				this.setVisible(false);
     		}
 		}
 		else if (e.getSource() == loadMachine)

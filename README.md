@@ -8,10 +8,43 @@ Matthew Turnbull
 Martin Papesh  
 2013:
 Tim Treese
-
+2015:
+Vatsal Bhagwani
 
 ## About
+---VERSION 3.1 RELEASE NOTES--------------------------------------
+IMPROVEMENTS OVER 2.2:
+
+1) Modify icon changed to match TM software
+
+2) Icon order changed around with modify icon as default selection
+
+3) Added button to reset registers. Clears all registers and resets machine back to starting state
+
+4) Added new speeds (slow, fast, very fast, and compute) similar to TM software for easier simulation
+
+5) Created step button that allows user to progress through the simulation one step at a time
+
+6) Multiple windows can now be opened and closed. Previously closing one window would close the entire program
+
+7) Modified edit state window to only allow for changing the register number. Other options are commented out in code should they need to be brought back
+
+8) Reset & clear registers buttons will not start the machine running again immediately, as was the case in 2.2 when the system was still locked
+
+9) Scaling the window now correctly adjusts the register locations so they can be accurately clicked on. Additionally, when using the arrows to go left and right in the 
+	registers, the registers now jump as opposed to the gliding motion. This was done for consistency of clicking on the points
+	
+
+BUGS:
+
+1) Users have reported the starting node switching when opening a saved file. This bug was unable to be reproduced, but should be marked as active
+
+2) Converting to the turing machine, first register starts at 1 when it should start at 0 
+
+
+
 ---VERSION 2.2 RELEASE NOTES--------------------------------------
+
 IMPROVEMENTS OVER 2.1:
 
 1) Middle-mouse click-and-drag to scan the canvas now works with left-mouse (more intuitive and works on mice with no middle button).

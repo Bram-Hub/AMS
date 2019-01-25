@@ -433,17 +433,31 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 							
 							if (rightOn)
 							{
-								curReg += dx;
+								//curReg += dx;
+								curReg++;
+								try {
+									Thread.sleep(500);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
 								
 								if (curReg > Integer.MAX_VALUE)
 									curReg = Integer.MAX_VALUE;
 							}
 							else if (leftOn)
 							{
-								curReg -= dx;
+								//curReg -= dx;
+								curReg--;
 								
 								if (curReg < 1)
 									curReg = 1;
+								try {
+									Thread.sleep(500);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
 							}
 							
 							held += dif;
@@ -517,12 +531,40 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 		double startX = (init - curReg) * regWidth + scaleX(scrollButtonWidth);
 		int rv = -1;
 		
+		//box size 95 px
+		//gap size 20px
+		//scale initial gap if init = 1
+		//initial gap size
+		long regNumber = init;
+		double startGapSize = Math.round(10242*Math.pow(regPanel.getWidth(), -.789));	//calculation for initial gap based on window width
+		/*
+		if(curReg!=1){
+			startGapSize = ((double)Math.ceil(curReg)-(double)curReg)*(startGapSize+115);
+			regNumber++;
+		}
+		*/
+		if(curReg!=1 && p.x<startGapSize) rv = (int)(regNumber-1);
+		else{
+			for(double i = startGapSize; i<p.x;){
+				if(p.x>=i&&p.x<=i+95){
+					rv = (int)regNumber;
+				}
+				i+=115;
+				regNumber++;
+			}
+		}
+		
+		return rv;
+		
+		//return (int)Math.ceil((double)(p.x)/120.0-1+curReg);
+		
+		/*
 		for (long num = init; num < end && num >= 1;++num, startX += regWidth)
 		{
 			if (num <= Integer.MAX_VALUE)
 			{
 				int regNum = (int)num;					
-				
+				System.out.println("HERE:    "+startX+5+" "+(regWidth-10));
 				RoundRectangle2D.Double r = new RoundRectangle2D.Double((int)(startX + 5), 5, regWidth - 10, INIT_HEIGHT - 30 ,REG_ARC,REG_ARC);
 
 				if (r.contains(p))
@@ -534,6 +576,7 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 		}
 		
 		return rv;
+		*/
 	}
 	
 	// trnaslate x
@@ -548,9 +591,10 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 	public Point translatePoint(Point from)
 	{
 		double scaleX = INIT_WIDTH / (double)regPanel.getWidth();
+		
 		double scaleY = INIT_HEIGHT / (double)regPanel.getHeight();
 		
-		return new Point((int)(from.x * scaleX), (int)(from.y * scaleY));
+		return new Point((int)(from.x /** scaleX*/), (int)(from.y * scaleY));
 	}
 
 	public void mouseClicked(MouseEvent e){}
