@@ -3,6 +3,7 @@ package abacus;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -13,6 +14,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.ImageObserver;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
+import java.awt.Component;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -24,22 +26,33 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
+import javax.swing.JTextField;
+import javax.swing.JLabel;
+import javax.swing.Box;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import TuringMachine.OTMSExporter;
 
 public class NodeEditor extends JFrame implements ActionListener
 {
+	private int numRegSets = 10;
 	JMenuItem newMachine = new JMenuItem("New Machine");
 	JMenuItem saveMachine = new JMenuItem("Save Machine");
 	JMenuItem loadMachine = new JMenuItem("Load Machine");
+	JMenuItem importMachine = new JMenuItem("Import Machine");
+	JMenuItem importRegisters = new JMenuItem("Import Registers");
 	JMenuItem export_xml = new JMenuItem("Export OwenTMS XML");
 	JMenuItem export_tm = new JMenuItem("Export OwenTMS TM");
 	JMenuItem close = new JMenuItem("Close All");
 	
+	ArrayList<JMenuItem> regSet = new ArrayList<JMenuItem>();
+	
 	JMenuItem help = new JMenuItem("Help");
 	
 	
-	JMenuItem[] items = { newMachine, saveMachine, loadMachine, export_xml, export_tm, close, help}; 
+	JMenuItem[] items = { newMachine, saveMachine, loadMachine, importMachine, importRegisters, export_xml, export_tm, close, help}; 
 	
 	// buttons
 	static Image imageAdd = makeRedTransparent(new ImageIcon("images/imageAdd.GIF").getImage());
@@ -52,11 +65,13 @@ public class NodeEditor extends JFrame implements ActionListener
 	static Image resetAll = makeRedTransparent(new ImageIcon("images/ResetAll.PNG").getImage());
 	static Image resetIm = makeRedTransparent(new ImageIcon("images/Reset.PNG").getImage());
 	static Image play = makeRedTransparent(new ImageIcon("images/Play.PNG").getImage());
+	static Image playMultiple = makeRedTransparent(new ImageIcon("images/PlayMultiple.PNG").getImage());
 	static Image fastForward = makeRedTransparent(new ImageIcon("images/FastForward.PNG").getImage());
 	static Image step = makeRedTransparent(new ImageIcon("images/Step.PNG").getImage());
 	
 	static Image transAdd = makeHazy(imageAdd);
 	static Image transSub = makeHazy(imageSub);
+	static Image transDel = makeHazy(imageDel);
 	
 	public final static Color babyBlue = new Color(67,203,255);
 	
@@ -69,11 +84,13 @@ public class NodeEditor extends JFrame implements ActionListener
 	JPanel north, west, south;
 	private final static String TITLE = "Abacus Machine Simulator";
 	
-	// machine panel
-	MachinePanel macPanel = new MachinePanel(this);
+	// switched creation of reg editor and macpanel to allow register count to update whenever new node is added
 	
 	// Register editor
 	RegisterEditor re = new RegisterEditor(this);
+
+	// machine panel
+	MachinePanel macPanel = new MachinePanel(this,re);
 	
 	// Simluator
 	Simulator simulator = new Simulator(this, re);
@@ -90,12 +107,23 @@ public class NodeEditor extends JFrame implements ActionListener
 		file.add(newMachine);
 		file.add(saveMachine);
 		file.add(loadMachine);
+		file.add(importMachine);
+		file.add(importRegisters);
 		file.addSeparator();
 		file.add(export_xml);
 		file.add(export_tm);
 		file.addSeparator();
 		file.add(close);
 		menuBar.add(file);
+		JMenu mregSet = new JMenu("Register Input");
+		for (int i = 0; i < numRegSets; i++)
+		{
+		    JMenuItem newReg = new JMenuItem(((Integer)(i+1)).toString());
+		    regSet.add(newReg);
+		    mregSet.add(newReg);
+			newReg.addActionListener(this);
+		}
+		menuBar.add(mregSet);
 		JMenu helpMenu = new JMenu("Help");
 		helpMenu.add(help);
 		menuBar.add(helpMenu);
@@ -169,6 +197,11 @@ public class NodeEditor extends JFrame implements ActionListener
 						}
 			    	}
 				});
+	}
+	
+	public int getNumRegSets()
+	{
+	    return numRegSets;
 	}
 	
 	public boolean confirmClose()
@@ -419,9 +452,231 @@ public class NodeEditor extends JFrame implements ActionListener
 				
 				ne.macPanel.nodes = fd.getNodes();
 				ne.re.regs = fd.getRegs();
+				ne.re.regInputNum = fd.getRegInput();
+				ne.re.otherRegs = fd.getOtherRegs();
 				ne.macPanel.comments = fd.getComments();
+				ne.simulator.setInputNumberText();
 				ne.repaint();
 				ne.re.repaint();
+			}
+		}
+		else if (e.getSource() == importMachine)
+		{
+			FileData fd = new FileData();
+			
+			if (fd.load())
+			{				
+                JPanel ynregPanel = new JPanel();
+                JPanel regPanel = new JPanel();
+                ArrayList<JTextField> regfields = new ArrayList<JTextField>();
+                ArrayList<JTextField> remapfields = new ArrayList<JTextField>();
+                HashMap<Integer, Integer> remapregs = new HashMap<Integer, Integer>();
+                JTextField numremapfield = new JTextField(5);
+                ynregPanel.add(new JLabel("How many?"));
+                ynregPanel.add(numremapfield);
+                int result = JOptionPane.showConfirmDialog(null, ynregPanel, 
+                    "Would you like to remap registers?", JOptionPane.OK_CANCEL_OPTION);
+                boolean rem = true;
+                if (result == JOptionPane.OK_OPTION) {
+                    rem = false;
+                }
+                while (result == JOptionPane.OK_OPTION && !rem) {
+                    int numremap = 0;
+                    rem = false;
+                    while (result == JOptionPane.OK_OPTION && !rem)
+                    {
+                        try
+                        {
+                            numremap = Integer.parseInt(numremapfield.getText());
+                            rem = true;
+                        }
+                        catch(Exception exc)
+                        {
+                            result = JOptionPane.showConfirmDialog(null, ynregPanel, 
+                                "Please enter a valid integer.\nWould you still like to remap registers?", JOptionPane.OK_CANCEL_OPTION);
+                        }
+                    }
+			        for (int i = 0 ; i < numremap; i++)
+			        {
+                        regfields.add(new JTextField("0", 5));
+                        remapfields.add(new JTextField("0", 5));
+                        regPanel.add(regfields.get(i));
+                        regPanel.add(new JLabel("->"));
+                        regPanel.add(remapfields.get(i));
+                        if (i != numremap-1)
+                        {
+                            regPanel.add(Box.createHorizontalStrut(15)); // a spacer
+                        }
+			        }
+			        result = JOptionPane.showConfirmDialog(null, regPanel, 
+                        "Please enter the new register numbers", JOptionPane.OK_CANCEL_OPTION);
+                    rem = false;
+                    if (result == JOptionPane.OK_OPTION) {
+                        while (result == JOptionPane.OK_OPTION && !rem)
+                        {   
+                            try
+                            {
+			                    for (int i = 0 ; i < numremap; i++)
+			                    {       
+			                        int remapnum = Integer.parseInt(remapfields.get(i).getText());
+			                        int regnum = -1;
+			                        String regstr = regfields.get(i).getText().toLowerCase();
+			                        if (!regstr.equals("all"))
+			                        {
+			                            regnum = Integer.parseInt(regstr);
+			                        }
+			                        if ((regnum <= 0 && !regstr.equals("all")) || remapnum < 0)
+			                        {
+			                            throw new IllegalArgumentException();
+			                        }
+			                        remapregs.put(regnum, remapnum);
+			                    }
+                                rem = true;
+                            }
+                            catch(Exception exc)
+                            {
+                                remapregs = new HashMap<Integer, Integer>();
+                                result = JOptionPane.showConfirmDialog(null, regPanel, 
+                                    "Please enter valid values.", JOptionPane.OK_CANCEL_OPTION);
+                            }
+                        }
+                    }
+                    if (!rem && result != JOptionPane.OK_OPTION) {
+                        result = JOptionPane.showConfirmDialog(null, ynregPanel, 
+                            "Would you like to remap registers?", JOptionPane.OK_CANCEL_OPTION);
+                        regfields = new ArrayList<JTextField>();
+                        remapfields = new ArrayList<JTextField>();
+                        remapregs = new HashMap<Integer, Integer>();
+                        regPanel = new JPanel();
+                        numremap = 0;
+                    }
+                }
+			
+                HashMap<Integer, Boolean> usedregs = new HashMap<Integer, Boolean>();
+                HashMap<Integer, Boolean> nusedregs = new HashMap<Integer, Boolean>();
+			    double avgy = 0.0;
+			    double maxx = 0.0;
+			    double newavgy = 0.0;
+			    double minx = 0.0;
+			    int numnewnodes = fd.getNodes().size();
+			    int numnewcomm = fd.getComments().size();
+			    int numnodes = macPanel.nodes.size();
+			    int numcomm = macPanel.comments.size();
+			    for (int i = 0; i < numnodes; i++)
+			    {
+			        Node pnode = ((Node)macPanel.nodes.get(i));
+			        Point pnt = pnode.getLocation();
+			        avgy += pnt.getY();
+			        if (pnt.getX() > maxx)
+			        {
+			            maxx = pnt.getX();
+			        }			     
+			        usedregs.put(pnode.getRegister(), true);   
+			    }
+			    for (int i = 0; i < numcomm; i++)
+			    {
+			        Point pnt = ((Comment)macPanel.comments.get(i)).getP();
+			        avgy += pnt.getY();
+			        if (pnt.getX() > maxx)
+			        {
+			            maxx = pnt.getX();
+			        }			        
+			    }
+			    if (numcomm+numnodes != 0)
+			    {
+			        avgy = avgy/(numcomm+numnodes);
+			    }
+			    for (int i = 0; i < numnewnodes; i++)
+			    {
+			        Node pnode = ((Node)fd.getNodes().get(i));
+			        Point pnt = pnode.getLocation();
+			        newavgy += pnt.getY();
+			        if (pnt.getX() < minx)
+			        {
+			            minx = pnt.getX();
+			        }			        
+			        nusedregs.put(pnode.getRegister(), true); 
+			    }
+			    for (int i = 0; i < numnewcomm; i++)
+			    {
+			        Point pnt = ((Comment)fd.getComments().get(i)).getP();
+			        newavgy += pnt.getY();
+			        if (pnt.getX() < minx)
+			        {
+			            minx = pnt.getX();
+			        }			        
+			    }
+			    if (numnewcomm+numnewnodes != 0)
+			    {
+			        newavgy = newavgy/(numnewcomm+numnewnodes);
+			    }
+			    
+			    for (Integer v : remapregs.values())
+			    {
+			        if (v>0){
+			            usedregs.put(v, true);
+			        }
+			    }
+			    
+			    int r = 1;
+			    for (Integer k : remapregs.keySet())
+			    {
+			        if (k>0 && remapregs.get(k) == 0){
+			            while (usedregs.containsKey(r)){r++;}
+			            usedregs.put(r, true);
+			            remapregs.put(k,r);
+			        }
+			    }
+			    if (remapregs.containsKey(-1))
+			    {
+			        for (Integer k : nusedregs.keySet())
+			        {
+			            if (!remapregs.containsKey(k)){
+			                while (usedregs.containsKey(r)){r++;}
+			                usedregs.put(r, true);
+			                remapregs.put(k,r);
+			            }
+			        }
+			    }
+			    
+			    double dx = maxx-minx+5+Node.getNodeSize();
+			    double dy = avgy-newavgy;
+			    for (int i = 0; i < numnewnodes; i++)
+			    {
+			        Node pnode = ((Node)fd.getNodes().get(i));
+			        Point pnt = pnode.getLocation();
+			        pnt.setLocation(pnt.getX()+dx, pnt.getY()+dy);
+			        pnode.setLocation(pnt);		
+			        if (remapregs.containsKey(pnode.getRegister()))
+			        {
+			            pnode.setRegister(remapregs.get(pnode.getRegister()));
+			        }        
+			    }
+			    for (int i = 0; i < numnewcomm; i++)
+			    {
+			        Point pnt = ((Comment)fd.getComments().get(i)).getP();
+			        pnt.setLocation(pnt.getX()+dx, pnt.getY()+dy);
+			        ((Comment)fd.getComments().get(i)).setP(pnt);	
+			    }
+				macPanel.nodes.addAll(fd.getNodes());
+				macPanel.comments.addAll(fd.getComments());
+				this.repaint();
+			}
+		}
+		else if (e.getSource() == importRegisters)
+		{
+			FileData fd = new FileData();
+			
+			if (fd.load())
+			{
+			    int oldInput = re.regInputNum;
+				re.regs = fd.getRegs();
+				re.regInputNum = fd.getRegInput();
+				re.otherRegs = fd.getOtherRegs();
+				re.setRegisterInput(oldInput);
+				simulator.setInputNumberText();
+				repaint();
+				re.repaint();
 			}
 		}
 		else if (e.getSource() == help)
@@ -429,18 +684,42 @@ public class NodeEditor extends JFrame implements ActionListener
 			JOptionPane.showMessageDialog(null,
 				"To set an initial state: Double click a node when in modification mode.\n" +
 				"To change a state's register: Double click a node when in modification mode.\n" +
+				"To clear a transition's destination, click the transition while in delete mode.\n" +
+				"To scroll: Hold the left mouse button on whitespace and drag.\n" +
+				"To zoom: Scroll with the mouse wheel.\n" +
+				"To reset zoom and scroll location: Double right click\n" +
+				"To create comments: Double click on an empty space when in modification mode.\n" +
+				"To modify/delete comments: Double click on a comment when in modification mode.\n" +
+				"Use \"Register Input\" to change which set of registers to run the machine on\n" +
+				"Use the play all button to select multiple inputs to run the machine on in succession at the selected speed\n" +
+				"Restoring registers restores only the inputs that were used in the last simulation\n" +
+				"Remapping registers when importing machines changes registers used in the imported machine to the ones specified\n" +
+				"You can use the term \"all\" when remapping registers to change all nodes' registers using one rule (excludes an registers with their own rules)\n" +
+				"You can remap a register to 0 to have it be set to the first register not already in use\n\n" +
+				"Program by Stanley Bak, April 2006 \n" + 
+				"Modified by Martin Papesh, May 2012\n" + 
+				"Modified by Nevin Jacob, May 2017",
+				"Help", 
+				JOptionPane.INFORMATION_MESSAGE);		
+			/*JOptionPane.showMessageDialog(null,
+				"To set an initial state: Double click a node when in modification mode.\n" +
+				"To change a state's register: Double click a node when in modification mode.\n" +
 				"To clear an empty transition's destination: Make the empty transition go to the " +
 					"originating node.\n" +
 				"To scroll: Hold the middle mouse button and drag.\n" +
 				"To zoom: Scroll with the mouse wheel.\n" +
 				"To reset zoom and scroll location: Double middle click\n" +
-				"To switch between tools quickly: Press the right mouse button.\n\n" +
-				"To create comments: Double click on an empty space when in modification mode.\n\n" +
-				"To modify/delete comments: Double click on a comment when in modification mode.\n\n" +
+				"To switch between tools quickly: Press the right mouse button.\n" +
+				"To create comments: Double click on an empty space when in modification mode.\n" +
+				"To modify/delete comments: Double click on a comment when in modification mode.\n" +
+				"Remapping registers when importing machines changes registers used in the imported machine to the ones specified\n" +
+				"You can use the term \"all\" when remapping registers to change all nodes' registers using one rule (excludes an registers with their own rules)\n" +
+				"You can remap a register to 0 to have it be set to the first register not already in use\n\n" +
 				"Program by Stanley Bak, April 2006 \n" + 
-				"Modified by Martin Papesh, May 2012",
+				"Modified by Martin Papesh, May 2012\n" + 
+				"Modified by Nevin Jacob, May 2017",
 				"Help", 
-				JOptionPane.INFORMATION_MESSAGE);		
+				JOptionPane.INFORMATION_MESSAGE);		*/
 		}
 		else if (e.getSource() == saveMachine)
 		{
@@ -455,9 +734,11 @@ public class NodeEditor extends JFrame implements ActionListener
 				//fd.nodes = macPanel.nodes;
 				//fd.regs = re.regs;
 				//fd.comments = macPanel.comments;
-        fd.setNodes(macPanel.nodes);
-        fd.setRegs(re.regs);
-        fd.setComments(macPanel.comments);
+                fd.setNodes(macPanel.nodes);
+                fd.setRegs(re.regs);
+				fd.setRegInput(re.regInputNum);
+				fd.setOtherRegs(re.otherRegs);
+                fd.setComments(macPanel.comments);
 				
 				fd.save();
 			}
@@ -488,5 +769,19 @@ public class NodeEditor extends JFrame implements ActionListener
 				otms.exportTM();
 			}
 		}
+		else if (regSet.contains(e.getSource()))
+	    {
+			if (locked)
+			{
+				JOptionPane.showMessageDialog(null,"There is currently an active simulation running. "
+						+ "First end the simulation then attempt to change inputs again.");
+			}
+			else
+			{
+	            int regNum = regSet.indexOf(e.getSource());
+	    	    boolean RIrv = re.setRegisterInput(regNum);
+	    	    simulator.setInputNumberText();
+			}
+	    }
 	}
 }

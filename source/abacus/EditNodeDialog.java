@@ -22,10 +22,8 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 	private JTextField tf = new JTextField(14);
 	//private String[] choices = { "Addition State", "Subtraction State" };
 	//private JComboBox combo = new JComboBox(choices);
-	//private JCheckBox deleteCheck = new JCheckBox("Delete this State");
 	private JCheckBox pauseCheck = new JCheckBox("Pause State");
 	private JCheckBox initial = new JCheckBox("Initial");
-	//private JButton deleteButton = new JButton("Delete");
 	private JButton ok = new JButton("Ok");
 	
 	private boolean pressedOk, deleted;
@@ -39,22 +37,17 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 		setTitle("State Editor");
 		
 		ok.addActionListener(this);
-	//	deleteButton.addActionListener(this);
 		tf.addActionListener(this);
 		
-	//	deleteCheck.addItemListener(this);
-	//	deleteButton.setEnabled(false);
-		
+	
 		setLayout(new FlowLayout());
 		setPreferredSize(new Dimension(405,100));
 		
 		add(new JLabel("Register:"));
 		add(tf);
 	//	add(combo);
-	//	add(deleteCheck);
 		add(pauseCheck);
 		add(initial);
-	//	add(deleteButton);
 		add(ok);
 		
 		pack();
@@ -78,7 +71,6 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 		
 		pressedOk = false;
 		deleted = false;
-	//	deleteCheck.setSelected(false);
 		this.initial.setSelected(initial);
 		if (initial)
 			this.initial.setEnabled(false);
@@ -113,12 +105,6 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 
 	public void actionPerformed(ActionEvent e)
 	{
-	/*	if (e.getSource() == deleteButton)
-		{
-			deleted = true;
-			setVisible(false);
-		}
-		*/
 		if (e.getSource() == ok || e.getSource() == tf)
 		{
 			pressedOk = true;
@@ -127,23 +113,19 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 			
 			try
 			{
-				register = Integer.parseInt(tf.getText());
+				int registerTemp = Integer.parseInt(tf.getText());
+				if (registerTemp < 1)
+				    throw new NumberFormatException();
+				register = registerTemp;
 				setVisible(false);
 			}
 			catch (NumberFormatException er)
 			{
-				JOptionPane.showMessageDialog(null,"Your register is not a valid integer: '" 
+				JOptionPane.showMessageDialog(null,"Your register is not a valid positive integer: '" 
 						+ tf.getText() + "'");
+		        pressedOk = false;
 			}
 		}
 	}
 
-	public void itemStateChanged(ItemEvent e)
-	{
-		/*if (e.getSource() == deleteCheck)
-		{
-			deleteButton.setEnabled(deleteCheck.isSelected());
-		}
-		*/
-	}
 }

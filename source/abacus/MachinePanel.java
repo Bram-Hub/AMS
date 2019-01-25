@@ -12,6 +12,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.TreeSet;
+import java.awt.event.*;
+
 
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
@@ -23,17 +25,19 @@ public class MachinePanel extends ZoomablePanel
 	public static Color darkBlue = new Color(0,0,128);
 	MouseAction ma = new MouseAction();
 	NodeEditor parent;
+	RegisterEditor re;
 	Image previewImage = null;
 	Point mousePoint, lastMousePoint, startPoint;
 	EditNodeDialog end;
 	private boolean locked = false;
-	public static boolean isClicked=false;
+	
 	
 	Object selection = null;
 	
-	public MachinePanel(NodeEditor parent)
+	public MachinePanel(NodeEditor parent, RegisterEditor re)
 	{
 		this.parent = parent;
+		this.re = re;
 		end = new EditNodeDialog(parent);
 		
 		setPreferredSize(new Dimension(500,500));
@@ -89,6 +93,50 @@ public class MachinePanel extends ZoomablePanel
 		locked = false;
 	}
 	
+	public boolean checkClicked(Point pt)
+	{
+	    boolean notInSelection = (selection == null);
+		if (!notInSelection && selection instanceof Node){
+		    Node n = (Node) selection;
+		    notInSelection = !n.isInNode(pt);
+		}
+		if (!notInSelection && selection instanceof Comment )
+		{
+		    Comment c = (Comment)selection;
+		    notInSelection = !c.select(pt);
+		    Point p = c.getP();
+		    boolean temp = c.select(p);
+		}
+		boolean ret = false;
+		if (parent.getState() == NodeEditor.STATE_MOD && !locked && !notInSelection)
+		{
+		    ret = true;
+		}
+		return ret;
+	}
+	
+	public boolean checkClickedDel(Point pt)
+	{
+	    boolean notInSelection = (selection == null);
+		if (!notInSelection && selection instanceof Node){
+		    Node n = (Node) selection;
+		    notInSelection = !n.checkSelected(pt);
+		}
+		if (!notInSelection && selection instanceof Comment )
+		{
+		    Comment c = (Comment)selection;
+		    notInSelection = !c.select(pt);
+		    Point p = c.getP();
+		    boolean temp = c.select(p);
+		}
+		boolean ret = false;
+		if (parent.getState() == NodeEditor.STATE_DEL && !locked && !notInSelection)
+		{
+		    ret = true;
+		}
+		return ret;
+	}
+	
 	protected void draw(Graphics2D g)
 	{
 		for (int x = 0; x < comments.size(); ++x)
@@ -130,6 +178,8 @@ public class MachinePanel extends ZoomablePanel
 		public void mouseClicked(MouseEvent e)
 		{
 			Point point = e.getPoint();
+		    Object oldselection = selection;
+		    
 			if (!isZoomAction(point) && !locked && e.getButton() == MouseEvent.BUTTON1)
 			{
 				boolean doNotSelect = false;
@@ -142,94 +192,26 @@ public class MachinePanel extends ZoomablePanel
 					Node n = new Node();
 					n.setPlus(true);
 					n.setLocation(new Point(mousePoint.x + 8,mousePoint.y - 14));
+					if (nodes.size() == 0)
+					    n.setInitialState(true);
 					nodes.add(n);
+					re.refreshReg(); // refresh register count
 				}
 				else if (state == NodeEditor.STATE_SUB)
 				{
 					Node n = new Node();
 					n.setLocation(new Point(mousePoint.x,mousePoint.y-13));
+					if (nodes.size() == 0)
+					    n.setInitialState(true);
 					nodes.add(n);
 				}
 				else if (state == NodeEditor.STATE_DEL)
 				{
-					if (selection != null)
-					{ // apply an action to the current selection
-						Node applyTo = null;
-						int index = -1;
-						
-						for (int x = nodes.size()-1; x >= 0; --x)
-						{
-							Node n = (Node)nodes.get(x);
-							
-							if (n.isInNode(mousePoint) == true)
-							{
-								index = x;
-								applyTo = n;
-								break;
-							}
-						}
-						
-						if (applyTo != null && selection instanceof Node)
-						{ // apply it
-							Node selected = (Node)selection;
-							int sel = selected.getSelected();
-							
-							if (sel == Node.SELECTED_OUT)
-							{
-								selected.setOut(applyTo);
-							}
-							else if (sel == Node.SELECTED_OUTEMPTY)
-							{
-								if (selected == applyTo)
-									selected.setOutEmpty(null);
-								else
-									selected.setOutEmpty(applyTo);
-							}
-							else if (sel == Node.SELECTED_NODE && selected == applyTo &&
-									e.getClickCount() == 2)
-							{								
-								Point p = parent.getLocation();
-								p.x += getX() + e.getPoint().x;
-								p.y += getY() + e.getPoint().y;
-								
-								for (int x = nodes.size()-1; x >= 0; --x)
-								{
-									Node n = (Node)nodes.get(x);
-									
-									if (n.getOut() == selected)
-										n.setOut(null);
-									else if (n.getOutEmpty() == selected)
-										n.setOutEmpty(null);
-								}
-								
-								nodes.remove(index);
-								
-								doNotSelect = true;
-							}
-						}
-						else if (selection instanceof Comment)
-						{
-							if (e.getClickCount() == 2)
-							{
-								doNotSelect = true;
-								comments.remove(selection);
-							}
-						}
-						
-						if (selection instanceof Node)
-						{
-							((Node)selection).clearSelection();
-						}
-						else if (selection instanceof Comment)
-							((Comment)selection).clearSelection();
-						
-						selection = null;
-						
-					}
-					
+					selection = null;
 					if (!doNotSelect && selection == null) // select something
 					{
-						for (int x = 0; x < nodes.size(); ++x)
+						
+						for (int x = nodes.size()-1; x >= 0; --x)
 						{
 							Node n = (Node)nodes.get(x);
 							
@@ -239,9 +221,8 @@ public class MachinePanel extends ZoomablePanel
 								
 								if (n.getSelected() == Node.SELECTED_NODE)
 								{
-									startPoint = new Point(mousePoint.x, mousePoint.y);
+									startPoint = new Point(mousePoint);
 								}
-								
 								break;
 							}
 							else if (selection != null)
@@ -249,50 +230,84 @@ public class MachinePanel extends ZoomablePanel
 								n.clearSelection();
 							}
 						}
-						
-						if (selection == null)
-						{ // try comments
-							for (int x = 0; x < comments.size(); ++x)
-							{
-								Comment c = (Comment)comments.get(x);
+						if (selection instanceof Node) { // apply it
+	
+								Node selected = (Node)selection;
+								int sel = selected.getSelected();
 								
-								if (selection == null && c.select(mousePoint))
+								if (selected.checkSelected(mousePoint))
 								{
-									selection = c;
-									startPoint = new Point(mousePoint.x, mousePoint.y);
+								    if (sel == Node.SELECTED_OUT)
+								    {
+									    selected.setOut(null);
+								    }
+								    else if (sel == Node.SELECTED_OUTEMPTY)
+								    {
+									    selected.setOutEmpty(null);
+								    }
+								    else if (sel == Node.SELECTED_NODE)
+								    {								
+									    Point p = parent.getLocation();
+									    p.x += getX() + e.getPoint().x;
+									    p.y += getY() + e.getPoint().y;
+									    
+									    for (int x = nodes.size()-1; x >= 0; --x)
+									    {
+									    	Node n = (Node)nodes.get(x);
+									    	
+									    	if (n.getOut() == selected)
+									    		n.setOut(null);
+									    	else if (n.getOutEmpty() == selected)
+									    		n.setOutEmpty(null);
+									    }
+									    nodes.remove(selected);
+									    if (nodes.size() > 0)
+	    								    ((Node)nodes.get(0)).setInitialState(true);
+								    }
+								    ((Node)selection).clearSelection();								
+									doNotSelect = true;
+						        }
+						}
+						
+						else{
+								for (int x = 0; x < comments.size(); ++x)
+									{
+										Comment c = (Comment)comments.get(x);
+										
+										if (selection == null && c.select(mousePoint) == true)
+										{
+											selection = c;
+											startPoint = new Point(mousePoint);											
+										}
+										else if (selection != null)
+											c.clearSelection();
+									}
+								if (selection == null){
+									startPoint = null;
 								}
-								else if (selection != null)
-									c.clearSelection();
+								if (selection instanceof Comment)
+								{
+									doNotSelect = true;
+								    ((Comment)selection).clearSelection();
+									comments.remove(selection);
+								}
+						}
+							if (selection instanceof Node)
+							{
+								((Node)selection).clearSelection();
+							}
+							else if (selection instanceof Comment){
+								((Comment)selection).clearSelection();
 							}
 							
-							if (selection == null)
-								startPoint = null;									
-						}
-						else
-						{
-							for (int x = 0; x < comments.size(); ++x)
-							{
-								Comment c = (Comment)comments.get(x);
-								
-								c.clearSelection();
-							}
-						}
+							selection = null;
+							
 					}
 				}
+				
 				else if (state == NodeEditor.STATE_MOD)
 				{
-				System.out.print("Checking nodes to set isClicked\n");
-				for (int x = nodes.size()-1; x >= 0; --x)
-					{
-						Node n = (Node)nodes.get(x);
-						
-						if (n.isInNode(mousePoint) == true)
-						{
-							isClicked=true;
-							System.out.print("Setting isClicked to true!\n");
-							break;
-						}
-					}
+					
 					if (selection != null)
 					{ // apply an action to the current selection
 						Node applyTo = null;
@@ -334,11 +349,15 @@ public class MachinePanel extends ZoomablePanel
 								p.y += getY() + e.getPoint().y;
 								
 								int rv = end.modifyNode(selected,index == 0,p);
+								re.refreshReg(); // refresh register count
 								
 								if (index != 0 && rv == EditNodeDialog.MOD_MAKEINITIAL)
 								{
-									Object temp = nodes.get(index);
-									nodes.set(index,nodes.get(0));
+									Node temp = (Node)nodes.get(index);
+									Node temp2 = (Node)nodes.get(0);
+									temp.setInitialState(true);
+									temp2.setInitialState(false);
+									nodes.set(index,temp2);
 									nodes.set(0,temp);
 								}
 								else if (rv == EditNodeDialog.MOD_DELETE)
@@ -354,6 +373,8 @@ public class MachinePanel extends ZoomablePanel
 									}
 									
 									nodes.remove(index);
+								    if (nodes.size() > 0)
+    								    ((Node)nodes.get(0)).setInitialState(true);
 								}
 								
 								doNotSelect = true;
@@ -361,6 +382,7 @@ public class MachinePanel extends ZoomablePanel
 						}
 						else if (selection instanceof Comment)
 						{
+
 							if (e.getClickCount() == 2)
 							{
 								String s = (String)JOptionPane.showInputDialog(
@@ -393,8 +415,7 @@ public class MachinePanel extends ZoomablePanel
 						else if (selection instanceof Comment)
 							((Comment)selection).clearSelection();
 						
-						selection = null;
-						
+						selection = null;						
 					}
 					
 					if (!doNotSelect && selection == null) // select something
@@ -409,7 +430,7 @@ public class MachinePanel extends ZoomablePanel
 								
 								if (n.getSelected() == Node.SELECTED_NODE)
 								{
-									startPoint = new Point(mousePoint.x, mousePoint.y);
+									startPoint = new Point(mousePoint);
 								}
 								
 								break;
@@ -429,7 +450,7 @@ public class MachinePanel extends ZoomablePanel
 								if (selection == null && c.select(mousePoint))
 								{
 									selection = c;
-									startPoint = new Point(mousePoint.x, mousePoint.y);
+									startPoint = new Point(mousePoint);
 								}
 								else if (selection != null)
 									c.clearSelection();
@@ -484,17 +505,109 @@ public class MachinePanel extends ZoomablePanel
 				
 				repaint();
 			}
+			/*
 			else if (e.getButton() == MouseEvent.BUTTON3)
 			{
 				parent.nextButton();
 				mouseMoved(e);
 			}
+			*/
+			if (oldselection != null && oldselection != selection)
+			{
+			    if (oldselection instanceof Comment)
+			    {
+			        Comment c = (Comment)oldselection;
+			        c.clearSelection();
+			    }
+			    else if (oldselection instanceof Node)
+			    {
+			        Node n = (Node)oldselection;
+			        n.clearSelection();
+			    }
+			}
+			
+			//selection = null;
 		}
 
 		public void mousePressed(MouseEvent e)
-		{ }
-
-		public void mouseReleased(MouseEvent e)
+		{ 
+			Point point = e.getPoint();
+		    if (isZoomAction(point))
+		        return;
+			mousePoint = toRealCoords(point);
+			boolean notInSelection = (selection == null);
+			if (!notInSelection && selection instanceof Node){
+			    Node n = (Node) selection;
+			    notInSelection = !n.isInNode(mousePoint);
+			    if (notInSelection && n.getSelected() == Node.SELECTED_NODE)
+			        n.clearSelection();
+			}
+			if (!notInSelection && selection instanceof Comment )
+			{
+			    Comment c = (Comment)selection;
+		        notInSelection = !c.select(mousePoint);
+			}
+			startPoint = null;
+			if (parent.getState() == NodeEditor.STATE_MOD && !locked && !notInSelection)
+			{
+				startPoint = new Point(mousePoint);
+			}
+			if (parent.getState() == NodeEditor.STATE_MOD && !locked && selection == null) // select something
+			{
+				for (int x = 0; x < nodes.size(); ++x)
+				{
+					Node n = (Node)nodes.get(x);
+					
+					if (selection == null && n.select(mousePoint) == true)
+					{
+						selection = n;
+						
+						if (n.getSelected() == Node.SELECTED_NODE)
+						{
+							startPoint = new Point(mousePoint);
+						}
+						
+						break;
+					}
+					else if (selection != null)
+					{
+						n.clearSelection();
+			    	}
+				}
+				
+				if (selection == null)
+				{ // try comments
+					for (int x = 0; x < comments.size(); ++x)
+					{
+						Comment c = (Comment)comments.get(x);
+						
+						if (selection == null && c.select(mousePoint))
+						{
+							selection = c;
+							startPoint = new Point(mousePoint);
+						}
+						else if (selection != null)
+							c.clearSelection();
+					}
+					
+					if (selection == null)
+						startPoint = null;
+							
+				}
+				else
+				{
+					for (int x = 0; x < comments.size(); ++x)
+					{
+						Comment c = (Comment)comments.get(x);
+						
+						c.clearSelection();
+					}
+				}
+			}
+			
+		}
+		
+	public void mouseReleased(MouseEvent e)
 		{ 
 			startPoint = null;
 		}
@@ -510,7 +623,7 @@ public class MachinePanel extends ZoomablePanel
 
 		public void mouseDragged(MouseEvent e)
 		{ 
-			if (!locked && startPoint != null && selection != null)
+			if (parent.getState() == NodeEditor.STATE_MOD && !locked && startPoint != null && selection != null)
 			{
 				Point p = toRealCoords(e.getPoint());
 				
@@ -555,6 +668,10 @@ public class MachinePanel extends ZoomablePanel
 				else if (state == NodeEditor.STATE_SUB)
 				{
 					previewImage = NodeEditor.transSub;
+				}
+				else if (state == NodeEditor.STATE_DEL)
+				{
+					previewImage = NodeEditor.transDel;
 				}
 				else
 					previewImage = null;

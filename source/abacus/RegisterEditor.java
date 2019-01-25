@@ -3,6 +3,7 @@ package abacus;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -21,9 +22,11 @@ import java.awt.geom.RoundRectangle2D;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.TreeMap;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
@@ -31,15 +34,27 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 {
 	RegisterPanel regPanel = new RegisterPanel();
 	private static final int scrollButtonWidth = 40;
-	private TreeMap backup = null; // for use in computation
+	public ArrayList<TreeMap> backups = new ArrayList<TreeMap>(); //  for use in computation
 	public TreeMap regs = new TreeMap(); // maps Integer -> BigInteger
+	public int regInputNum = 0;
+	public ArrayList<TreeMap> otherRegs = new ArrayList<TreeMap>(); // stores other register inputs not in use yet
 	private final static BigInteger biMillion = new BigInteger("1000000");
 	private final static BigIntegerBean BIBZero = new BigIntegerBean();
 	private double curReg = 1.0;
 	private final static int regWidth = 60;
 	private final static int INIT_HEIGHT = 70;
 	private final static int INIT_WIDTH = 400;
-	private JButton jump = new JButton("Jump To Register");
+	//private JButton jump = new JButton("Jump To Register");
+	
+	private JButton jump = new JButton("Jump To Input");
+	private JButton jumpLeft = new JButton("<");
+	private JButton jumpRight = new JButton(">");
+	
+	
+	private JLabel inputNumber = new JLabel("Input: 1");
+	private JLabel numRegisters = new JLabel("Number of Registers: 0");
+
+	
 	public static Color darkGray = new Color(32, 32, 32);
 	public static Font normal = new Font("Verdana",Font.PLAIN,10);
 	public static Font small = new Font("Verdana",Font.PLAIN,8);
@@ -56,9 +71,10 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 	public RegisterEditor(NodeEditor ne)
 	{		
 		this.ne = ne;
+		
 		regPanel.addMouseListener(this);
 		regPanel.addMouseMotionListener(this);
-		
+
 		setLayout(new BorderLayout());
 		
 		add(regPanel, BorderLayout.CENTER);
@@ -67,9 +83,42 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 		south.setBorder(BorderFactory.createLineBorder(MachinePanel.darkBlue));
 		regPanel.setBackground(NodeEditor.babyBlue);
 		
-		south.add(jump);
+		south.setLayout(new BorderLayout());
+
+		JPanel buttons = new JPanel();
+		
+		buttons.add(jumpLeft);
+		jumpLeft.addActionListener(this);
+		buttons.add(jump);
 		jump.addActionListener(this);
+		buttons.add(jumpRight);
+		jumpRight.addActionListener(this);
+
+		
+		// input and register info in the bottom left, buttons in the center
+		// todo: have buttons remain in true center
+		inputNumber.setFont(new Font(inputNumber.getName(), Font.PLAIN, 20));
+		numRegisters.setFont(new Font(inputNumber.getName(), Font.PLAIN, 20));
+		JPanel regInfo = new JPanel();
+		regInfo.add(inputNumber);
+		regInfo.add(numRegisters);
+		south.add(buttons, BorderLayout.CENTER);
+		south.add(regInfo,BorderLayout.WEST);
 		add(south,BorderLayout.SOUTH);
+//		south.add(jumpLeft,BorderLayout.CENTER);
+//		jumpLeft.addActionListener(this);
+//		south.add(jump,BorderLayout.CENTER);
+//		jump.addActionListener(this);
+//		south.add(jumpRight,BorderLayout.CENTER);
+//		jumpRight.addActionListener(this);
+//		south.add(oops,BorderLayout.CENTER);
+//		oops.addActionListener(this);
+//		add(south,BorderLayout.SOUTH);
+		
+		for (int i = 0; i < ne.getNumRegSets(); i++)
+		{
+		    otherRegs.add(new TreeMap());
+		}
 	}
 	
 	public void clearSelection()
@@ -93,13 +142,21 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 	
 	public void initial()
 	{
-		backup = (TreeMap)regs.clone();
+		backups = (ArrayList<TreeMap>)otherRegs.clone();
+		backups.set(regInputNum, (TreeMap)regs.clone());
 	}
 	
-	public void restore()
-	{
-		regs = (TreeMap)backup.clone();
+	public void restore(ArrayList<Integer> inputs)
+	{	
+	    for (Integer input:inputs)
+	    {
+	        TreeMap backup = (TreeMap)backups.get(input).clone();
+	        otherRegs.set(input, backup);
+	        if (input == regInputNum)
+	            regs = (TreeMap)backup.clone();
+	    }
 	}
+	
 	/**
 	 * Add a pebble to this register
 	 * @param reg the register number to add to
@@ -161,6 +218,23 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 			rv = BIBZero;
 		
 		return rv;
+	}
+	
+	public boolean setRegisterInput(int num)
+	{
+	    boolean rv = false;
+	    if (num < otherRegs.size() && num != regInputNum)
+	    {
+	        otherRegs.set(regInputNum, (TreeMap)regs.clone());  
+	        regs = new TreeMap();
+	        if (otherRegs.get(num) != null)//from an old version
+	            regs = (TreeMap)(otherRegs.get(num).clone());
+	        regInputNum = num;
+    		inputNumber.setText("Input: "+(regInputNum+1));
+	        repaint();
+	        rv = true;
+	    }
+	    return rv;
 	}
 	
 	class RegisterPanel extends JPanel
@@ -687,8 +761,10 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 		{
 			String s = (String)JOptionPane.showInputDialog(
                     null,
-                    "Which register would you like to jump to?",
-                    "Enter Register Number",
+//                    "Which register would you like to jump to?",
+//                    "Enter Register Number",
+                    "Which input would you like to jump to?",
+                    "Enter Register Input Number",
                     JOptionPane.PLAIN_MESSAGE,
                     null,
                     null,
@@ -696,22 +772,58 @@ public class RegisterEditor extends JPanel implements MouseMotionListener, Mouse
 
 			//If a string was returned
 			if ((s != null) && (s.length() > 0)) {
+				// old code for jumping to an actual register
+//			    try
+//			    {
+//			    	int i = Integer.parseInt(s);
+//			    	
+//			    	curReg = Math.max(1,i);
+//			    	repaint();
+//			    }
+//			    catch (NumberFormatException er)
+//			    {
+//			    	JOptionPane.showMessageDialog(null, "You didn't enter an integer between 1 and " +
+//			    			Integer.MAX_VALUE + ": '" + s + "'");
+//			    }
+//			    
+//			    return;
+				// code to jump to register *input*
 			    try
 			    {
 			    	int i = Integer.parseInt(s);
 			    	
-			    	curReg = Math.max(1,i);
+			    	int newRegNum = Math.max(1,i);
+			    	if (newRegNum > 10){
+			    		throw new NumberFormatException();
+			    	}
+					setRegisterInput(newRegNum-1);
+		    		inputNumber.setText("Input: "+(regInputNum+1));
 			    	repaint();
 			    }
 			    catch (NumberFormatException er)
 			    {
-			    	JOptionPane.showMessageDialog(null, "You didn't enter an integer between 1 and " +
-			    			Integer.MAX_VALUE + ": '" + s + "'");
+			    	JOptionPane.showMessageDialog(null, "You didn't enter an integer between 1 and 10: '" + s + "'");
 			    }
-			    
-			    return;
 			}
 		}
+		else if (e.getSource() == jumpLeft){ // move left a register input
+			if (regInputNum != 0){
+				int newRegNum = regInputNum-1;
+				setRegisterInput(newRegNum);
+	    		inputNumber.setText("Input: "+(regInputNum+1));
+			}
+		}
+		else if(e.getSource() == jumpRight){ // move right a register input
+			if (regInputNum != 9){
+				int newRegNum = regInputNum+1;
+				setRegisterInput(newRegNum);
+	    		inputNumber.setText("Input: "+(regInputNum+1));
+			}
+		}
+
+	}
+	public void refreshReg(){ // refresh register count
+		numRegisters.setText("Number of Registers: " + ne.macPanel.getRegCount());
 	}
 	
 	

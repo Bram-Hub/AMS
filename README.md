@@ -9,7 +9,9 @@ Martin Papesh
 2013:
 Tim Treese
 2015:
-Vatsal Bhagwani
+Vatsal Bhagwani  
+2017:
+Nevin Jacob
 
 ## About
 ---VERSION 3.1 RELEASE NOTES--------------------------------------

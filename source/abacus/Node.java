@@ -16,6 +16,7 @@ public class Node
 {
 	private int register = 1;
 	private boolean plus = false;
+	private boolean isInitial = false;
 	private Node out = null;
 	private Node outEmpty = null; // only if this node is empty
 	private static final Color nodeColor = new Color(255,255,155);
@@ -49,6 +50,11 @@ public class Node
 		
 	}
 	
+	public static int getNodeSize()
+	{
+	    return NODE_SIZE;
+	}
+	
 	public boolean isPauseState()
 	{
 		return pauseState;
@@ -57,6 +63,16 @@ public class Node
 	public void setPauseState(boolean p)
 	{
 		pauseState = p;
+	}
+	
+	public boolean isInitialState()
+	{
+		return isInitial;
+	}
+	
+	public void setInitialState(boolean i)
+	{
+		isInitial = i;
 	}
 	
 	public void simSelect(int which)
@@ -238,6 +254,14 @@ public class Node
 		}
 		
 		return rv;
+	}
+	
+	public boolean checkSelected(Point p)
+	{
+	    int s = selected;
+	    boolean ret = select(p) && (s == selected);
+	    selected = s;
+	    return ret;
 	}
 	
 	public void clearSelection()

@@ -18,6 +18,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.Date;
 
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 public abstract class ZoomablePanel extends JPanel implements MouseWheelListener, 
 MouseListener, MouseMotionListener
@@ -214,42 +215,48 @@ MouseListener, MouseMotionListener
 	public void mouseClicked(MouseEvent arg0){	}
 	public void mousePressed(MouseEvent e) 
 	{  
-		
-//		if (e.getButton() == MouseEvent.BUTTON1)
-
+		Point p = e.getPoint();
+		Point mp = toRealCoords(p);
 //	This section of code handles the left-mouse drag scrolling
-		if (e.getButton() == MouseEvent.BUTTON1)
+		if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 2)
 		{
-			/*if (MachinePanel.state == NodeEditor.STATE_MOD)
-			{
-				System.out.print("Correct\n");
-			}*/
 			try
 			{
 				Thread.sleep(100);
 			}
 			catch (Exception f) { }
-			if (!MachinePanel.isClicked)
+				
+			lastX = lastY = -1;
+			moveX = moveY = zoomFactor = curZoomFactor = 0;
+			repaint();
+		}
+//	This section of code handles the left-mouse drag scrolling
+		if (e.getButton() == MouseEvent.BUTTON1)
+		{
+			try
 			{
-				System.out.print("isClicked is false!\n");
-				if (e.getClickCount() == 2)
+				Thread.sleep(100);
+			}
+			catch (Exception f) { }
+				
+			lastX = lastY = -1;
+			if (!(this instanceof MachinePanel) || !((MachinePanel)this).checkClicked(mp))
+			{
+				if (e.getClickCount() == 3 && (!(this instanceof MachinePanel) || !((MachinePanel)this).checkClickedDel(mp)))
 				{
 					moveX = moveY = zoomFactor = curZoomFactor = 0;
 					repaint();
 				}
 			
-				Point p = e.getPoint();
 			
 				lastX = p.x;
 				lastY = p.y;
 			}
 		}
-//		else if (e.getButton() == MouseEvent.BUTTON1)
 
 //	This section of code handles all other left-clicks.
 		if (e.getButton() == MouseEvent.BUTTON1)
 		{
-			Point p = e.getPoint();
 			
 			if (toggle.contains(p))
 			{
@@ -290,8 +297,7 @@ MouseListener, MouseMotionListener
 			else if (right.contains(p)) rv = true;
 			else if (in.contains(p)) rv = true;
 			else if (out.contains(p)) rv = true;
-		}
-		
+		}		
 		return rv;
 	}
 	
@@ -304,12 +310,12 @@ MouseListener, MouseMotionListener
 	
 	public void mouseReleased(MouseEvent e) 
 	{  
-//		if (e.getButton() == MouseEvent.BUTTON2)
-		if (e.getButton() == MouseEvent.BUTTON1)
+		if (lastX != -1 && lastY != -1 && e.getButton() == MouseEvent.BUTTON1)
 		{
-			if (!MachinePanel.isClicked)
+			Point p = e.getPoint();
+			mousePoint = toRealCoords(p);
+			if (lastX != -1 && lastY != -1)
 			{
-				Point p = e.getPoint();
 				
 				double dx = lastX - p.x;
 				double dy = p.y - lastY;
@@ -322,7 +328,6 @@ MouseListener, MouseMotionListener
 				
 				repaint();
 			}
-			MachinePanel.isClicked=false;
 		}
 		if (e.getButton() == MouseEvent.BUTTON1)
 			mouseDown = false;
