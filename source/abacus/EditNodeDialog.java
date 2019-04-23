@@ -30,6 +30,11 @@ public class EditNodeDialog extends JDialog implements ActionListener, ItemListe
 	private boolean sInitial; // initial state
 	private boolean sAddition; // Addition state?
 	private int register;
+
+	public void itemStateChanged(ItemEvent e)
+	{
+		return;
+	}
 	
 	public EditNodeDialog(Frame parent)
 	{
