@@ -118,6 +118,11 @@ public class Simulator extends JPanel implements ActionListener
 //	    if (re != null) 
 //    		inputNumber.setText("Input: "+(re.regInputNum+1));
 //	}
+
+	public void setStepNumber(int steps)
+	{
+		numSteps.setText("Number of Steps: " + steps);
+	}
 	
 	public boolean runningMultiple()
 	{
@@ -194,6 +199,9 @@ public class Simulator extends JPanel implements ActionListener
     			    getInputs.add(inputNum);
     			    inputNums.add(inputNum);
     			}
+    			JCheckBox allinputs = new JCheckBox("All Inputs");
+    			getInputs.add(allinputs);
+    			inputNums.add(allinputs);
                 int result = JOptionPane.showConfirmDialog(null, getInputs, 
                     "Which inputs?", JOptionPane.OK_CANCEL_OPTION);
                 boolean runOnInputs = false;
@@ -201,6 +209,15 @@ public class Simulator extends JPanel implements ActionListener
                 startIntInputNums = new ArrayList<Integer>();
                 while (result == JOptionPane.OK_OPTION && !runOnInputs)
                 {
+                	if (inputNums.get(10).isSelected())
+                	{
+                		for (int i = 0; i<ne.getNumRegSets(); i++)
+                		{
+                			intInputNums.add(i);
+                            runOnInputs = true;
+                		}
+                		break;
+                	}
                     for (int i = 0; i < ne.getNumRegSets(); i++)
                     {
                         if (inputNums.get(i).isSelected())

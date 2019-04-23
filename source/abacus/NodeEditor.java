@@ -43,6 +43,7 @@ public class NodeEditor extends JFrame implements ActionListener
 	JMenuItem loadMachine = new JMenuItem("Load Machine");
 	JMenuItem importMachine = new JMenuItem("Import Machine");
 	JMenuItem importRegisters = new JMenuItem("Import Registers");
+	JMenuItem importInputs = new JMenuItem("Import Inputs");
 	JMenuItem export_xml = new JMenuItem("Export OwenTMS XML");
 	JMenuItem export_tm = new JMenuItem("Export OwenTMS TM");
 	JMenuItem close = new JMenuItem("Close All");
@@ -52,7 +53,7 @@ public class NodeEditor extends JFrame implements ActionListener
 	JMenuItem help = new JMenuItem("Help");
 	
 	
-	JMenuItem[] items = { newMachine, saveMachine, loadMachine, importMachine, importRegisters, export_xml, export_tm, close, help}; 
+	JMenuItem[] items = { newMachine, saveMachine, loadMachine, importMachine, importRegisters, importInputs, export_xml, export_tm, close, help}; 
 	
 	// buttons
 	static Image imageAdd = makeRedTransparent(new ImageIcon("images/imageAdd.GIF").getImage());
@@ -109,6 +110,7 @@ public class NodeEditor extends JFrame implements ActionListener
 		file.add(loadMachine);
 		file.add(importMachine);
 		file.add(importRegisters);
+		file.add(importInputs);
 		file.addSeparator();
 		file.add(export_xml);
 		file.add(export_tm);
@@ -455,7 +457,7 @@ public class NodeEditor extends JFrame implements ActionListener
 				ne.re.regInputNum = fd.getRegInput();
 				ne.re.otherRegs = fd.getOtherRegs();
 				ne.macPanel.comments = fd.getComments();
-				ne.simulator.setInputNumberText();
+				//ne.simulator.setInputNumberText();
 				ne.repaint();
 				ne.re.repaint();
 			}
@@ -674,10 +676,15 @@ public class NodeEditor extends JFrame implements ActionListener
 				re.regInputNum = fd.getRegInput();
 				re.otherRegs = fd.getOtherRegs();
 				re.setRegisterInput(oldInput);
-				simulator.setInputNumberText();
+				//simulator.setInputNumberText();
 				repaint();
 				re.repaint();
 			}
+		}
+		else if (e.getSource() == importInputs)
+		{
+			TestFileData fd = new TestFileData(re, simulator);
+			fd.load();
 		}
 		else if (e.getSource() == help)
 		{
@@ -780,7 +787,7 @@ public class NodeEditor extends JFrame implements ActionListener
 			{
 	            int regNum = regSet.indexOf(e.getSource());
 	    	    boolean RIrv = re.setRegisterInput(regNum);
-	    	    simulator.setInputNumberText();
+	    	    //simulator.setInputNumberText();
 			}
 	    }
 	}
